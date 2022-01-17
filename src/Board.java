@@ -7,23 +7,29 @@ import javax.swing.*;
 
 public class Board extends JPanel {
     public static int TILE_SIZE = 30;
+    public static int TILE_SPACING = 2;
     public static Int2 OFFSET = new Int2(100, 100);
-    private int maxDiePositionOffset = 8;
-    private Int2 size = new Int2(10, 10);
-    private int currentDieValue = 6;
-    private int previousDieValue = currentDieValue;
-    private double dieAngle;
-    private Int2 diePositionOffset = new Int2();
-    private Tile[][] tiles;
+    public static Int2 BOARD_SIZE = new Int2(10, 10);
+
     private Player[] players;
 
+    // Tiles
+    private Tile[][] tiles;
     private Color oddTileColor = new Color(50, 90, 200);
     private Color evenTileColor = new Color(200, 200, 50);
 
+    // Dice
+    private int currentDieValue = 6;
+    private int previousDieValue = currentDieValue;
+    private int maxDiePositionOffset = 8;
+    private double dieAngle;
+    private Int2 diePositionOffset = new Int2();
+
+
     public Tile getTile(int tileId) {
         // TODO: Use foreach maybe?
-        for (int y = 0; y < size.y; y++) {
-            for (int x = 0; x < size.x; x++) {
+        for (int y = 0; y < BOARD_SIZE.y; y++) {
+            for (int x = 0; x < BOARD_SIZE.x; x++) {
                 Tile tile = tiles[x][y];
 
                 if (tile.getTileId() == tileId) {
@@ -32,21 +38,21 @@ public class Board extends JPanel {
             }
         }
 
-        System.out.println("Error: Could not find tile at id " + tileId);
         return null;
     }
 
     private int getTotalTiles() {
-        return size.x * size.y;
+        return BOARD_SIZE.x * BOARD_SIZE.y;
     }
 
     public Board(Int2 size, Hashtable<Integer, Integer> moveToConfig) {
-        this.size = size;
+        this.BOARD_SIZE = size;
 
         // TODO: Move to drawBoard function
         this.tiles = new Tile[size.x][size.y];
         for (int y = 0; y < size.y; y++) {
             for (int x = 0; x < size.x; x++) {
+
                 int tileIndex = (y * size.x);
                 // Account for odd rows going right to left
                 if (y % 2 == 1) {
@@ -63,6 +69,7 @@ public class Board extends JPanel {
                 if (moveToConfig.containsKey(tileId)) {
                     tile.setMoveTo(moveToConfig.get(tileId));
                 }
+
             }
         }
     }
@@ -160,62 +167,98 @@ public class Board extends JPanel {
     }
 
     private void drawBoard(Graphics2D g2d) {
-        for (int y = 0; y < size.y; y++) {
-            for (int x = 0; x < size.x; x++) {
+        for (int y = 0; y < BOARD_SIZE.y; y++) {
+            for (int x = 0; x < BOARD_SIZE.x; x++) {
                 Tile tile = tiles[x][y];
+
+                drawTile(g2d, tile);
+                setFontSize(g2d, 10f);
 
                 int xPos = TILE_SIZE * x + OFFSET.x;
                 int yPos = TILE_SIZE * y + OFFSET.y;
-
-                setFontSize(g2d, 10f);
-
-                // TODO: draw rounded rectangles where the board turns
-                Color tileColor = tile.getTileId() % 2 == 1 ? oddTileColor : evenTileColor;
-
-                g2d.setColor(tileColor);
-
-                // TODO: Try to refactor the turning tiles a little
-                // Draw turning tiles
-                boolean isEndPoint = tile.getTileId() == 1 || tile.getTileId() == getTotalTiles();
-                if (!isEndPoint && (x % size.x == 0 || x % size.x == size.x - 1)) {
-                    g2d.fillRoundRect(xPos, yPos, TILE_SIZE, TILE_SIZE, 20, 20);
-
-                    if (x % size.x == 0) {
-                        if (tile.getTileId() % 2 == 0) {
-                            // Left side - Even tile
-                            g2d.fillRect(xPos, yPos, TILE_SIZE, TILE_SIZE/2);
-                            g2d.fillRect(xPos + TILE_SIZE/2, yPos, TILE_SIZE/2, TILE_SIZE);
-                        } else {
-                            // Left side - Odd tile
-                            g2d.fillRect(xPos, yPos + TILE_SIZE/2, TILE_SIZE, TILE_SIZE/2);
-                            g2d.fillRect(xPos + TILE_SIZE/2, yPos, TILE_SIZE/2, TILE_SIZE);
-                        }
-                    } else if (x % size.x == size.x - 1) {
-                        if (tile.getTileId() % 2 == 0) {
-                            // Right side - Even tile
-                            g2d.fillRect(xPos, yPos, TILE_SIZE, TILE_SIZE/2);
-                            g2d.fillRect(xPos, yPos, TILE_SIZE/2, TILE_SIZE);
-                        } else {
-                            // Right side - Odd tile
-                            g2d.fillRect(xPos, yPos, TILE_SIZE/2, TILE_SIZE);
-                            g2d.fillRect(xPos, yPos + TILE_SIZE/2, TILE_SIZE, TILE_SIZE/2);
-                        }
-                    }
-                } else {
-                    g2d.fillRect(xPos, yPos, TILE_SIZE, TILE_SIZE);
-                }
 
                 // TODO: Try to figure this out programmatically
                 int boardNumberYOffset = 20;
                 g2d.setColor(Color.white);
                 g2d.drawString(""+tile.getTileId(), xPos, yPos + TILE_SIZE - boardNumberYOffset);
+
+                // Only for testing
+//                g2d.drawString(tile.getCoordinates().toString(), xPos, yPos + TILE_SIZE - boardNumberYOffset);
             }
         }
     }
 
+    private void drawTile(Graphics2D g2d, Tile tile) {
+        Color tileColor = tile.getTileId() % 2 == 1 ? oddTileColor : evenTileColor;
+        g2d.setColor(tileColor);
+
+        Int2 pos = tile.getPosition();
+        int tileId = tile.getTileId();
+
+        Tile previousTile = getTile(tileId - 1);
+        Tile nextTile = getTile(tileId + 1);
+
+        if (previousTile != null && nextTile != null) {
+            Int2 tileCoord = tile.getCoordinates();
+            Int2 prevCoord = previousTile.getCoordinates();
+            Int2 nextCoord = nextTile.getCoordinates();
+
+            Int2 prevDir = new Int2(prevCoord.x - tileCoord.x, prevCoord.y - tileCoord.y);
+            Int2 nextDir = new Int2(nextCoord.x - tileCoord.x, nextCoord.y - tileCoord.y);
+
+            if (prevCoord.y == tileCoord.y && nextCoord.y == tileCoord.y) {
+                drawHorizontalTile(g2d, pos);
+            } else if (prevCoord.x == tileCoord.x && nextCoord.x == tileCoord.x) {
+                drawVerticalTile(g2d, pos);
+            } else {
+                double angle = getTurningTileAngle(prevDir, nextDir);
+                drawTurningTile(g2d, pos, angle);
+            }
+        }
+    }
+
+    private void drawHorizontalTile(Graphics2D g2d, Int2 pos) {
+        drawStraightTile(g2d, pos, false);
+    }
+
+    private void drawVerticalTile(Graphics2D g2d, Int2 pos) {
+        drawStraightTile(g2d, pos, true);
+    }
+
+    private void drawStraightTile(Graphics2D g2d, Int2 pos, boolean isVertical) {
+        Int2 cellCenter = new Int2(pos.x + TILE_SIZE/2, pos.y + TILE_SIZE/2);
+        double cellRotation = isVertical ? Math.PI/2 : 0;
+
+        g2d.rotate(cellRotation, cellCenter.x, cellCenter.y);
+
+        g2d.rotate(cellRotation, cellCenter.x, cellCenter.y);
+        g2d.fillRect(pos.x, pos.y + TILE_SPACING, TILE_SIZE, TILE_SIZE - 2*TILE_SPACING);
+
+        g2d.rotate(-cellRotation, cellCenter.x, cellCenter.y);
+    }
+
+    private double getTurningTileAngle(Int2 prevDir, Int2 nextDir) {
+        if ((prevDir.x < 0 && nextDir.y < 0) || (nextDir.x < 0 && prevDir.y < 0)) return 0;
+        if ((prevDir.x < 0 && nextDir.y > 0) || (nextDir.x < 0 && prevDir.y > 0)) return (3*Math.PI)/2;
+        if ((prevDir.x > 0 && nextDir.y < 0) || (nextDir.x > 0 && prevDir.y < 0)) return Math.PI/2;
+        if ((prevDir.x > 0 && nextDir.y > 0) || (nextDir.x > 0 && prevDir.y > 0)) return Math.PI;
+
+        return 0;
+    }
+
+    private void drawTurningTile(Graphics2D g2d, Int2 pos, double angle) {
+        Int2 cellCenter = new Int2(pos.x + TILE_SIZE/2, pos.y + TILE_SIZE/2);
+
+        g2d.rotate(angle, cellCenter.x, cellCenter.y);
+        g2d.fillRoundRect(pos.x + TILE_SPACING, pos.y + TILE_SPACING, TILE_SIZE - 2*TILE_SPACING, TILE_SIZE - 2*TILE_SPACING, 20, 20);
+        g2d.fillRect(pos.x, pos.y + TILE_SPACING, TILE_SIZE/2, TILE_SIZE - 2*TILE_SPACING);
+        g2d.fillRect(pos.x + TILE_SPACING, pos.y, TILE_SIZE - 2*TILE_SPACING, TILE_SIZE/2);
+        g2d.rotate(-angle, cellCenter.x, cellCenter.y);
+    }
+
     private void drawMoveToElements(Graphics2D g2d) {
-        for (int y = 0; y < size.y; y++) {
-            for (int x = 0; x < size.x; x++) {
+        for (int y = 0; y < BOARD_SIZE.y; y++) {
+            for (int x = 0; x < BOARD_SIZE.x; x++) {
                 Tile tile = tiles[x][y];
 
                 if (tile.hasMoveTo()) {

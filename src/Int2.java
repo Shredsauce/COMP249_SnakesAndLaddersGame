@@ -10,4 +10,8 @@ public class Int2 {
     public Int2() {
         // x and y default to 0
     }
+
+    public String toString() {
+        return "(" + x + ", " + y + ")";
+    }
 }
