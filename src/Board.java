@@ -7,6 +7,7 @@ import javax.swing.*;
 public class Board extends JPanel {
     public static int TILE_SIZE = 30;
     public static int TILE_SPACING = 5;
+    public static int NUM_TAIL_TILES = 3;
     public static Int2 OFFSET = new Int2(100, 100);
 
     // TODO: Make sure the value of an entry is not the key of another entry
@@ -388,11 +389,10 @@ public class Board extends JPanel {
         Tile previousTile = getTile(tileId - 1);
         Tile nextTile = getTile(tileId + 1);
 
-        if (nextTile == null || tileId == endTileIdForAnim) {
+        if (shouldDrawSnakeHead(tileId, nextTile)) {
             drawBoardHead(g2d, tile, previousTile);
-        } else if (previousTile == null) {
-            // Draw tail
-            // TODO: Take up first 3 cells to draw tail
+        } else if (shouldDrawSnakeTail(tileId, previousTile)) {
+            drawBoardTail(g2d, tile, previousTile);
         } else {
             Int2 tileCoord = tile.getCoordinates();
             Int2 prevCoord = previousTile.getCoordinates();
@@ -410,6 +410,14 @@ public class Board extends JPanel {
                 drawTurningTile(g2d, pos, angle);
             }
         }
+    }
+
+    private boolean shouldDrawSnakeHead(int tileId, Tile nextTile) {
+        return nextTile == null || tileId == endTileIdForAnim;
+    }
+
+    private boolean shouldDrawSnakeTail(int tileId, Tile previousTile) {
+        return /*tileId <= NUM_TAIL_TILES || */previousTile == null;
     }
 
     private void drawHorizontalTile(Graphics2D g2d, Int2 pos) {
@@ -476,6 +484,22 @@ public class Board extends JPanel {
         drawCircle(g2d, new Int2(cellCenter.x+3, cellCenter.y+6), 3);
 
         g2d.rotate(-headAngle, cellCenter.x, cellCenter.y);
+    }
+
+    private void drawBoardTail(Graphics2D g2d, Tile tile, Tile previousTile) {
+        Int2 pos = tile.getPosition();
+//
+//        int tileId = tile.getTileId();
+//
+//        int offset = NUM_TAIL_TILES - tileId;
+//
+        // TODO: Make tail longer (more than 1 cell)
+        // TODO: Rotate tail correctly
+        Polygon poly = new Polygon();
+        poly.addPoint(pos.x, pos.y+TILE_SIZE/2);
+        poly.addPoint(pos.x+TILE_SIZE, pos.y+TILE_SPACING);
+        poly.addPoint(pos.x+TILE_SIZE, pos.y+TILE_SIZE-TILE_SPACING);
+        g2d.fillPolygon(poly);
     }
 
     private double getSnakeHeadAngle(Int2 pos, Int2 previousPos) {

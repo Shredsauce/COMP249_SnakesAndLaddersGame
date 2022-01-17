@@ -120,7 +120,7 @@ public class GUIManager {
         Thread thread = new Thread(() -> {
             int currentTile = 1;
             while(currentTile < board.getLastTile().getTileId()) {
-                threadSleep(50);
+                threadSleep(5);
                 currentTile += 1;
                 board.setEndTileIdForAnim(currentTile);
             }
