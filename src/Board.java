@@ -33,13 +33,14 @@ public class Board extends JPanel {
     };
 
     public Int2 boardSize = new Int2(10, 10);
-
     private Player[] players;
 
     // Tiles
     private Tile[][] tiles;
     private Color oddTileColor = new Color(50, 90, 200);
     private Color evenTileColor = new Color(200, 200, 50);
+    private boolean boardShowAnimComplete;
+    private Tile lastTile;
 
     // Dice
     private int currentDieValue = 6;
@@ -47,7 +48,7 @@ public class Board extends JPanel {
     private int maxDiePositionOffset = 8;
     private double dieAngle;
     private Int2 diePositionOffset = new Int2();
-
+    private int endTileIdForAnim;
 
     public Tile getTile(int tileId) {
         // TODO: Use foreach maybe?
@@ -84,7 +85,7 @@ public class Board extends JPanel {
         return tile;
     }
 
-    private int getTotalTiles() {
+    public int getTotalTiles() {
         return boardSize.x * boardSize.y;
     }
 
@@ -120,7 +121,6 @@ public class Board extends JPanel {
             validNeighborCoords = sortValidCoordsByPreference(tile, validNeighborCoords, preferHorizontal, preferForward);
 
             if (validNeighborCoords.size() == 0) {
-
                 allTilesFound = true;
                 break;
             }
@@ -129,6 +129,8 @@ public class Board extends JPanel {
 
             currentTileId++;
         }
+
+        lastTile = getTile(currentTileId);
 
         moveToConfig = generateMoveToConfig(boardSettings);
         applyMoveToConfig(moveToConfig);
@@ -250,14 +252,28 @@ public class Board extends JPanel {
         }
     }
 
+    public void setBoardAnimComplete() {
+        boardShowAnimComplete = true;
+    }
+
+    public void setEndTileIdForAnim(int endTileIdForAnim) {
+        this.endTileIdForAnim = endTileIdForAnim;
+    }
+
+    public Tile getLastTile() {
+        return lastTile;
+    }
+
     // TODO: Change name from doDrawing to something else. Also change the g2d variable name
     private void doDrawing(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.drawString("Snakes and ladders", 20, 20);
 
-        drawBoard(g2d);
+        drawBoard(g2d, endTileIdForAnim);
 
-        drawMoveToElements(g2d);
+        if (boardShowAnimComplete){
+            drawMoveToElements(g2d);
+        }
 
         if (players != null && players.length > 0) {
             for (int i = 0; i < players.length; i++) {
@@ -333,12 +349,13 @@ public class Board extends JPanel {
         g2d.fillOval(center.x-radius, center.y-radius, 2*radius, 2*radius);
     }
 
-    private void drawBoard(Graphics2D g2d) {
+    private void drawBoard(Graphics2D g2d, int tileEndId) {
         for (int y = 0; y < boardSize.y; y++) {
             for (int x = 0; x < boardSize.x; x++) {
                 Tile tile = tiles[x][y];
 
                 if (tile == null) continue;
+                if (tile.getTileId() > tileEndId) continue;
 
                 drawTile(g2d, tile);
                 setFontSize(g2d, 10f);
@@ -346,19 +363,23 @@ public class Board extends JPanel {
                 int xPos = TILE_SIZE * x + OFFSET.x;
                 int yPos = TILE_SIZE * y + OFFSET.y;
 
-                // TODO: Try to figure this out programmatically
-                int boardNumberYOffset = 20;
-                g2d.setColor(Color.white);
-                g2d.drawString(""+tile.getTileId(), xPos, yPos + TILE_SIZE - boardNumberYOffset);
-
-                // Only for testing
-//                g2d.drawString(tile.getCoordinates().toString(), xPos, yPos + TILE_SIZE - boardNumberYOffset);
+                if (boardShowAnimComplete) {
+                    drawTileNumber(g2d, tile.getTileId(), xPos, yPos);
+                }
             }
         }
     }
 
+    private void drawTileNumber(Graphics2D g2d, int tileId, int xPos, int yPos) {
+        // TODO: Try to figure this out programmatically
+        int boardNumberYOffset = 20;
+        g2d.setColor(Color.white);
+        g2d.drawString(""+tileId, xPos, yPos + TILE_SIZE - boardNumberYOffset);
+    }
+
     private void drawTile(Graphics2D g2d, Tile tile) {
-        Color tileColor = tile.getTileId() % 2 == 1 ? oddTileColor : evenTileColor;
+        int endTileAnimSwitch = endTileIdForAnim % 2;
+        Color tileColor = (tile.getTileId() % 2) + endTileAnimSwitch == 1 ? oddTileColor : evenTileColor;
         g2d.setColor(tileColor);
 
         Int2 pos = tile.getPosition();
@@ -367,12 +388,11 @@ public class Board extends JPanel {
         Tile previousTile = getTile(tileId - 1);
         Tile nextTile = getTile(tileId + 1);
 
-        if (nextTile == null) {
-            // Draw head
-            drawBoardHead(g2d, pos);
+        if (nextTile == null || tileId == endTileIdForAnim) {
+            drawBoardHead(g2d, tile, previousTile);
         } else if (previousTile == null) {
             // Draw tail
-
+            // TODO: Take up first 3 cells to draw tail
         } else {
             Int2 tileCoord = tile.getCoordinates();
             Int2 prevCoord = previousTile.getCoordinates();
@@ -410,7 +430,12 @@ public class Board extends JPanel {
         g2d.rotate(-cellRotation, cellCenter.x, cellCenter.y);
     }
 
-    private void drawBoardHead(Graphics2D g2d, Int2 pos) {
+    private void drawBoardHead(Graphics2D g2d, Tile tile, Tile previousTile) {
+        Int2 pos = tile.getPosition();
+        Int2 previousPos = previousTile != null ? previousTile.getPosition() : pos;
+
+        double headAngle = getSnakeHeadAngle(pos, previousPos);
+
         Int2 cellCenter = new Int2(pos.x + TILE_SIZE/2, pos.y + TILE_SIZE/2);
 
         int headLength = (int)(1.5*TILE_SIZE/2);
@@ -424,6 +449,8 @@ public class Board extends JPanel {
 
         int tongueOutPosX = 10;
         int tongueInPosX = -5;
+
+        g2d.rotate(headAngle, cellCenter.x, cellCenter.y);
 
         // Tongue animation
         boolean showTongue = time % 3 < 0.05;
@@ -447,6 +474,18 @@ public class Board extends JPanel {
         g2d.setColor(Color.red);
         drawCircle(g2d, new Int2(cellCenter.x+3, cellCenter.y-6), 3);
         drawCircle(g2d, new Int2(cellCenter.x+3, cellCenter.y+6), 3);
+
+        g2d.rotate(-headAngle, cellCenter.x, cellCenter.y);
+    }
+
+    private double getSnakeHeadAngle(Int2 pos, Int2 previousPos) {
+        Int2 previousTileDir = new Int2(previousPos.x - pos.x, previousPos.y - pos.y);
+        if (previousTileDir.x > 0) return 0;
+        if (previousTileDir.x < 0) return Math.PI;
+        if (previousTileDir.y > 0) return (3*Math.PI)/2;
+        if (previousTileDir.y < 0) return Math.PI/2;
+
+        return 0;
     }
 
     private double getTurningTileAngle(Int2 prevDir, Int2 nextDir) {

@@ -12,6 +12,8 @@ public class GUIManager {
 
         Board board = createBoard();
 
+        animateShowBoard();
+
         JFrame frame = new JFrame("");
         Container content = frame.getContentPane();
         content.setLayout(new BorderLayout());
@@ -112,6 +114,22 @@ public class GUIManager {
 
         board.setDieValue(actualRoll);
         return actualRoll;
+    }
+
+    private void animateShowBoard() {
+        Thread thread = new Thread(() -> {
+            int currentTile = 1;
+            while(currentTile < board.getLastTile().getTileId()) {
+                threadSleep(50);
+                currentTile += 1;
+                board.setEndTileIdForAnim(currentTile);
+            }
+
+            board.setBoardAnimComplete();
+        });
+        thread.start();
+
+
     }
 
     public Board createBoard() {

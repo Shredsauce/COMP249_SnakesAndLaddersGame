@@ -1,20 +1,14 @@
 public class Tile {
     private int tileId;
-
     private Int2 coordinates;
-
     private int moveTo;
-
-    // TODO: Create Int2 class
 
     public Tile (int tileId, Int2 coordinates) {
         this.tileId = tileId;
         this.coordinates = coordinates;
-        // Set moveTo to itself just to be safe TODO: Clean this a little. Maybe put it as part of the constructor?
         this.moveTo = tileId;
     }
 
-    // TODO: Validate this is a good tile (can't find any 0 or past the max tile amount)
     public int getTileId() {
         return this.tileId;
     }
