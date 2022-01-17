@@ -6,7 +6,7 @@ import javax.swing.*;
 
 public class Board extends JPanel {
     public static int TILE_SIZE = 30;
-    public static int TILE_SPACING = 2;
+    public static int TILE_SPACING = 5;
     public static Int2 OFFSET = new Int2(100, 100);
 
     // TODO: Make sure the value of an entry is not the key of another entry
@@ -367,7 +367,13 @@ public class Board extends JPanel {
         Tile previousTile = getTile(tileId - 1);
         Tile nextTile = getTile(tileId + 1);
 
-        if (previousTile != null && nextTile != null) {
+        if (nextTile == null) {
+            // Draw head
+            drawBoardHead(g2d, pos);
+        } else if (previousTile == null) {
+            // Draw tail
+
+        } else {
             Int2 tileCoord = tile.getCoordinates();
             Int2 prevCoord = previousTile.getCoordinates();
             Int2 nextCoord = nextTile.getCoordinates();
@@ -402,6 +408,45 @@ public class Board extends JPanel {
         g2d.fillRect(pos.x, pos.y + TILE_SPACING, TILE_SIZE, TILE_SIZE - 2*TILE_SPACING);
 
         g2d.rotate(-cellRotation, cellCenter.x, cellCenter.y);
+    }
+
+    private void drawBoardHead(Graphics2D g2d, Int2 pos) {
+        Int2 cellCenter = new Int2(pos.x + TILE_SIZE/2, pos.y + TILE_SIZE/2);
+
+        int headLength = (int)(1.5*TILE_SIZE/2);
+        int headWidth = TILE_SIZE/2;
+        // TODO: Create TILE_HALF_SIZE
+
+        double time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
+        Color headColor = g2d.getColor();
+        g2d.setColor(Color.red);
+
+        int tongueOutPosX = 10;
+        int tongueInPosX = -5;
+
+        // Tongue animation
+        boolean showTongue = time % 3 < 0.05;
+        int tonguePosX = showTongue ? tongueOutPosX : tongueInPosX;
+        double tongueSplitAngle = 0.3;
+
+        // Tongue
+        g2d.setStroke(new BasicStroke(4));
+        g2d.drawLine(pos.x - tonguePosX, pos.y + TILE_SIZE/2, pos.x, pos.y + TILE_SIZE/2);
+        g2d.setStroke(new BasicStroke(3));
+
+        g2d.rotate(tongueSplitAngle, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
+        g2d.drawLine(pos.x - tonguePosX - 7, pos.y + TILE_SIZE/2, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
+        g2d.rotate(-2*tongueSplitAngle, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
+        g2d.drawLine(pos.x - tonguePosX - 7, pos.y + TILE_SIZE/2, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
+        g2d.rotate(tongueSplitAngle, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
+
+        // Eyes
+        g2d.setColor(headColor);
+        g2d.fillOval(cellCenter.x-headLength, cellCenter.y-headWidth, 2*headLength, 2*headWidth);
+        g2d.setColor(Color.red);
+        drawCircle(g2d, new Int2(cellCenter.x+3, cellCenter.y-6), 3);
+        drawCircle(g2d, new Int2(cellCenter.x+3, cellCenter.y+6), 3);
     }
 
     private double getTurningTileAngle(Int2 prevDir, Int2 nextDir) {
@@ -494,17 +539,17 @@ public class Board extends JPanel {
         Tile startTile = getTile(startTileId);
         Tile endTile = getTile(endTileId);
 
-        Int2 startPos = startTile.getPosition();
-        Int2 endPos = endTile.getPosition();
+        Int2 tileStartPos = startTile.getPosition();
+        Int2 tileEndPos = endTile.getPosition();
 
-        int startPosX = startPos.x + TILE_SIZE/2;
-        int startPosY = startPos.y + snakePosYOffset;
+        int startPosX = tileStartPos.x + TILE_SIZE/2;
+        int startPosY = tileStartPos.y + snakePosYOffset;
 
-        int endPosX = endPos.x + TILE_SIZE/2;
-        int endPosY = endPos.y + TILE_SIZE - 2*snakePosYOffset;
+        int endPosX = tileEndPos.x + TILE_SIZE/2;
+        int endPosY = tileEndPos.y + TILE_SIZE - 2*snakePosYOffset;
 
         double x = startPosX - endPosX;
-        double y = startPos.y - endPosY;
+        double y = tileStartPos.y - endPosY;
 
         double distance = (int)Math.sqrt(x*x + y*y);
         double angle = Math.atan2(y, x) + Math.PI;
@@ -528,8 +573,6 @@ public class Board extends JPanel {
             g2d.drawLine((int)partStartX, (int)partStartY, (int)partEndX, (int)partEndY);
         }
         g2d.rotate(-angle, startPosX, startPosY);
-
-
     }
 
     private void setFontSize(Graphics2D g2d, float fontSize) {
