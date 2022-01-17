@@ -1,9 +1,6 @@
 import javax.swing.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.io.IOException;
+import java.awt.*;
 import java.util.Hashtable;
-import java.util.Locale;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -19,33 +16,69 @@ public class LadderAndSnake extends JFrame {
     public LadderAndSnake(int numPlayers) {
         this.numPlayers = numPlayers;
 
+        System.out.println(numPlayers);
         players = new Player[numPlayers];
 
         for (int i = 0; i < players.length; i++) {
-            players[i] = new Player(jetonOptions[i]);
+            players[i] = new Player(i, jetonOptions[i]);
         }
 
-        determinePlayerOrder();
+//        determinePlayerOrder();
     }
 
     private void determinePlayerOrder() {
+		// TODO: This doesn't work properly at all
+
         System.out.println(numPlayers + " players playing. Woohoo!");
         System.out.println("Let's roll the die to see who starts.");
 
+        Scanner scanner = new Scanner(System.in);
 
+        Hashtable<Player, Integer> playerRolls = new Hashtable<Player, Integer>();
+        for (Player player : players) {
+            playerRolls.put(player, 0);
+        }
 
+        boolean orderDetermined = false;
 
+        while (!orderDetermined) {
 
-//        while (!orderDetermined) {
-//            int playerNumber = 1; // TODO: Get the actual player number
-//            String next = scanner.nex
-//            System.out.println("Player " + playerNumber + ", press R to roll the die.");
-//
-//            if (next == "r") {
-//                int dieValue = flipDice();
-//                System.out.println(next + " "+dieValue);
-//            }
-//        }
+            Hashtable<Player, Integer> playerRollsThisRound = new Hashtable<Player, Integer>(playerRolls);
+
+            
+
+            for (int i = 0; i < players.length; i++) {
+                Player player = players[i];
+
+                if (player.hasUniqueRoll(playerRolls)) {
+                    continue;
+                }
+
+                int playerNumber = player.displayedPlayerNumber();
+
+                System.out.println(String.format("Player %s, press Enter to roll the die.", playerNumber));
+                scanner.nextLine();
+
+                int roll = flipDice();
+                playerRollsThisRound.put(player, roll);
+
+                System.out.println(String.format("Player %s's roll is %d", playerNumber, roll));
+
+            }
+
+            playerRolls = playerRollsThisRound;
+
+            for(Player player : players) {
+                if (!player.hasUniqueRoll(playerRolls)) {
+                    continue;
+                }
+            }
+
+            orderDetermined = true;
+        }
+
+        System.out.println("Order has been determined");
+
     }
 
     public int flipDice() {

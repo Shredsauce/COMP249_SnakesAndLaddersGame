@@ -265,12 +265,14 @@ public class Board extends JPanel {
             double partEndX = startPosX + ((i+1) * partLengthX);
             double partEndY = startPosY + waveAmplitude*Math.sin(partEndX + time);
 
+            // TODO: The tail of the snake doesn't point exactly at the target square (95 should go to 24 but looks like it leads to the above square, 37)
+
             g2d.setStroke(new BasicStroke(snakeThickness));
             g2d.drawLine((int)partStartX, (int)partStartY, (int)partEndX, (int)partEndY);
         }
-
-
         g2d.rotate(-angle, startPosX, startPosY);
+
+
     }
 
     private void setFontSize(Graphics2D g2d, float fontSize) {

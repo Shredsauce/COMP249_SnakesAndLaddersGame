@@ -1,10 +1,15 @@
+import java.util.Hashtable;
+import java.util.Set;
+
 public class Player {
 
     private Tile currentTile;
     private char icon;
+    private int playerIndex;
 
-    public Player(char icon) {
+    public Player(int playerIndex, char icon) {
         this.icon = icon;
+        this.playerIndex = playerIndex;
     }
 
     public Tile getCurrentTile() {
@@ -17,5 +22,21 @@ public class Player {
 
     public String getIcon() {
         return icon+"";
+    }
+
+    public int displayedPlayerNumber() {
+        return playerIndex + 1;
+    }
+
+    public boolean hasUniqueRoll(Hashtable<Player, Integer> playerRolls) {
+        int thisPlayerRoll = playerRolls.get(this);
+
+        for(Player player : playerRolls.keySet()) {
+            if (player != this && playerRolls.get(this) == thisPlayerRoll) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
