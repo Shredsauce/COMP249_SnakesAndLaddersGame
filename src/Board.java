@@ -1,7 +1,6 @@
 
 import java.awt.*;
-import java.util.Hashtable;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.swing.*;
 
@@ -9,7 +8,31 @@ public class Board extends JPanel {
     public static int TILE_SIZE = 30;
     public static int TILE_SPACING = 2;
     public static Int2 OFFSET = new Int2(100, 100);
-    public static Int2 BOARD_SIZE = new Int2(10, 10);
+
+    // TODO: Make sure the value of an entry is not the key of another entry
+    // TODO: Option to randomly generate this. make sure elements are never on the same row
+    private Hashtable<Integer, Integer> defaultMoveToConfig = new Hashtable<Integer, Integer>() {
+        {put(1, 38);}
+        {put(4, 14);}
+        {put(9, 31);}
+        {put(16, 6);}
+        {put(21, 42);}
+        {put(28, 84);}
+        {put(36, 44);}
+        {put(48, 30);}
+        {put(51, 67);}
+        {put(62, 19);} // Most of the snake's head is on the 62
+        {put(64, 60);}
+        {put(64, 60);}
+        {put(71, 91);}
+        {put(80, 100);}
+        {put(93, 68);}
+        {put(95, 24);}
+        {put(97, 76);}
+        {put(98, 78);}
+    };
+
+    public Int2 boardSize = new Int2(10, 10);
 
     private Player[] players;
 
@@ -28,11 +51,11 @@ public class Board extends JPanel {
 
     public Tile getTile(int tileId) {
         // TODO: Use foreach maybe?
-        for (int y = 0; y < BOARD_SIZE.y; y++) {
-            for (int x = 0; x < BOARD_SIZE.x; x++) {
+        for (int y = 0; y < boardSize.y; y++) {
+            for (int x = 0; x < boardSize.x; x++) {
                 Tile tile = tiles[x][y];
 
-                if (tile.getTileId() == tileId) {
+                if (tile != null && tile.getTileId() == tileId) {
                     return tile;
                 }
             }
@@ -41,22 +64,167 @@ public class Board extends JPanel {
         return null;
     }
 
-    private int getTotalTiles() {
-        return BOARD_SIZE.x * BOARD_SIZE.y;
+    public Tile getTileAtCoordinates(Int2 coord) {
+        int clampedX = coord.x;
+        if (clampedX < 0) {
+            clampedX = 0;
+        } else if (clampedX >= boardSize.x) {
+            clampedX = boardSize.x - 1;
+        }
+
+        int clampedY = coord.y;
+        if (clampedY < 0) {
+            clampedY = 0;
+        } else if (clampedY >= boardSize.y) {
+            clampedY = boardSize.y - 1;
+        }
+
+        Tile tile = tiles[clampedX][clampedY];
+
+        return tile;
     }
 
-    public Board(Int2 size, Hashtable<Integer, Integer> moveToConfig) {
-        this.BOARD_SIZE = size;
+    private int getTotalTiles() {
+        return boardSize.x * boardSize.y;
+    }
 
-        // TODO: Move to drawBoard function
-        this.tiles = new Tile[size.x][size.y];
-        for (int y = 0; y < size.y; y++) {
-            for (int x = 0; x < size.x; x++) {
+    public Board(BoardSettings boardSettings) {
+        this.boardSize = boardSettings.boardSize;
 
-                int tileIndex = (y * size.x);
+        Hashtable<Integer, Integer> moveToConfig = new Hashtable<Integer, Integer>();
+
+        if (boardSettings.useDefault) {
+            moveToConfig = defaultMoveToConfig;
+            boardSettings.horizontalChance = 1f;
+            boardSettings.forwardChance = 1f;
+        }
+
+        Int2 coord = new Int2(0, boardSize.y - 1);
+
+        this.tiles = new Tile[boardSize.x][boardSize.y];
+
+        int currentTileId = 1;
+        boolean allTilesFound = false;
+        while (!allTilesFound) {
+            System.out.println(coord.toString() + " at id " + currentTileId);
+            Tile tile = new Tile(currentTileId, coord);
+            tiles[coord.x][coord.y] = tile;
+
+            Random random = new Random();
+            float horizontalChanceResult = random.nextFloat(0f, 1f);
+            float forwardChanceResult = random.nextFloat(0f, 1f);
+            boolean preferHorizontal = horizontalChanceResult < boardSettings.horizontalChance;
+            boolean preferForward = forwardChanceResult < boardSettings.forwardChance;
+
+            ArrayList<Int2> validNeighborCoords = getValidNeighborCoords(tile);
+            validNeighborCoords = sortValidCoordsByPreference(tile, validNeighborCoords, preferHorizontal, preferForward);
+
+            if (validNeighborCoords.size() == 0) {
+
+                allTilesFound = true;
+                break;
+            }
+
+            coord = validNeighborCoords.get(0);
+
+            currentTileId++;
+        }
+
+        moveToConfig = generateMoveToConfig(boardSettings);
+        applyMoveToConfig(moveToConfig);
+    }
+
+    private Hashtable<Integer, Integer> generateMoveToConfig(BoardSettings boardSettings) {
+        if (boardSettings.useDefault) {
+            return defaultMoveToConfig;
+        }
+
+        // TODO: Randomly generate move to config
+        return new Hashtable<Integer, Integer>();
+    }
+
+    private void applyMoveToConfig(Hashtable<Integer, Integer> moveToConfig) {
+        for (int y = 0; y < boardSize.y; y++) {
+            for (int x = 0; x < boardSize.x; x++) {
+                Tile tile = tiles[x][y];
+
+                if (tile != null && moveToConfig.containsKey(tile.getTileId())) {
+                    tile.setMoveTo(moveToConfig.get(tile.getTileId()));
+                }
+            }
+        }
+    }
+
+    private ArrayList<Int2> getValidNeighborCoords(Tile tile) {
+        Int2 coord = tile.getCoordinates();
+        Int2 rightNeighborCoord = new Int2(coord.x + 1, coord.y);
+        Int2 leftNeighborCoord = new Int2(coord.x - 1, coord.y);
+        Int2 upNeighborCoord = new Int2(coord.x, coord.y - 1);
+        Int2 downNeighborCoord = new Int2(coord.x, coord.y + 1);
+
+        Tile rightNeighbor = getTileAtCoordinates(rightNeighborCoord);
+        Tile leftNeighbor = getTileAtCoordinates(leftNeighborCoord);
+        Tile upNeighbor = getTileAtCoordinates(upNeighborCoord);
+        Tile downNeighbor = getTileAtCoordinates(downNeighborCoord);
+
+        ArrayList<Int2> validCoords = new ArrayList<Int2>();
+
+        if (rightNeighbor == null) {
+            validCoords.add(rightNeighborCoord);
+        }
+
+        if (leftNeighbor == null) {
+            validCoords.add(leftNeighborCoord);
+        }
+
+        if (upNeighbor == null) {
+            validCoords.add(upNeighborCoord);
+        }
+
+        if (downNeighbor == null) {
+            validCoords.add(downNeighborCoord);
+        }
+
+        return validCoords;
+    }
+
+    private ArrayList<Int2> sortValidCoordsByPreference(Tile tile, ArrayList<Int2> validCoords, boolean preferHorizontal, boolean preferForward) {
+        ArrayList<Int2> sortedCoords = new ArrayList<Int2>();
+
+        for(Int2 validCoord : validCoords) {
+            Int2 directionFromTile = new Int2(validCoord.x - tile.getCoordinates().x, validCoord.y - tile.getCoordinates().y);
+
+            if (preferHorizontal && directionFromTile.y == 0) {
+                sortedCoords.add(validCoord);
+            } else if (!preferHorizontal && directionFromTile.x == 0) {
+                sortedCoords.add(validCoord);
+            }
+        }
+
+        for(Int2 validCoord : validCoords) {
+            Int2 directionFromTile = new Int2(validCoord.x - tile.getCoordinates().x, validCoord.y - tile.getCoordinates().y);
+
+            if (preferForward && directionFromTile.x > 0 || directionFromTile.y > 0) {
+                sortedCoords.add(validCoord);
+            } else if (!preferForward && directionFromTile.x < 0 || directionFromTile.y < 0) {
+                sortedCoords.add(validCoord);
+            }
+        }
+
+        return sortedCoords;
+    }
+
+    public void loadDefaultBoard(Int2 boardSize) {
+        Hashtable<Integer, Integer> moveToConfig = defaultMoveToConfig;
+
+        this.tiles = new Tile[boardSize.x][boardSize.y];
+        for (int y = 0; y < boardSize.y; y++) {
+            for (int x = 0; x < boardSize.x; x++) {
+
+                int tileIndex = (y * boardSize.x);
                 // Account for odd rows going right to left
                 if (y % 2 == 1) {
-                    tileIndex += size.x - 1 - x;
+                    tileIndex += boardSize.x - 1 - x;
                 } else {
                     tileIndex += x;
                 }
@@ -69,7 +237,6 @@ public class Board extends JPanel {
                 if (moveToConfig.containsKey(tileId)) {
                     tile.setMoveTo(moveToConfig.get(tileId));
                 }
-
             }
         }
     }
@@ -167,9 +334,11 @@ public class Board extends JPanel {
     }
 
     private void drawBoard(Graphics2D g2d) {
-        for (int y = 0; y < BOARD_SIZE.y; y++) {
-            for (int x = 0; x < BOARD_SIZE.x; x++) {
+        for (int y = 0; y < boardSize.y; y++) {
+            for (int x = 0; x < boardSize.x; x++) {
                 Tile tile = tiles[x][y];
+
+                if (tile == null) continue;
 
                 drawTile(g2d, tile);
                 setFontSize(g2d, 10f);
@@ -230,8 +399,6 @@ public class Board extends JPanel {
         double cellRotation = isVertical ? Math.PI/2 : 0;
 
         g2d.rotate(cellRotation, cellCenter.x, cellCenter.y);
-
-        g2d.rotate(cellRotation, cellCenter.x, cellCenter.y);
         g2d.fillRect(pos.x, pos.y + TILE_SPACING, TILE_SIZE, TILE_SIZE - 2*TILE_SPACING);
 
         g2d.rotate(-cellRotation, cellCenter.x, cellCenter.y);
@@ -257,9 +424,11 @@ public class Board extends JPanel {
     }
 
     private void drawMoveToElements(Graphics2D g2d) {
-        for (int y = 0; y < BOARD_SIZE.y; y++) {
-            for (int x = 0; x < BOARD_SIZE.x; x++) {
+        for (int y = 0; y < boardSize.y; y++) {
+            for (int x = 0; x < boardSize.x; x++) {
                 Tile tile = tiles[x][y];
+
+                if (tile == null) continue;
 
                 if (tile.hasMoveTo()) {
                     if (tile.getMoveToTileId() > tile.getTileId()) {

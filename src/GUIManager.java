@@ -1,20 +1,11 @@
-import javax.security.auth.callback.Callback;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Hashtable;
-import java.util.Random;
-import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 public class GUIManager {
     private LadderAndSnake game;
 
     private Board board;
     public JButton rollDieBtn;
-
-    private Timer timer;
 
     public GUIManager(LadderAndSnake game) {
         this.game = game;
@@ -29,7 +20,7 @@ public class GUIManager {
         JPanel controls = new JPanel();
 
         rollDieBtn = new JButton("Roll die");
-        // TODO: Make onRollDie a little more generic so it can be used to determine player order. Also make sure the die cannot be rolled while it's being animated
+        // TODO: Make onRollDie a little more generic so it can be used to determine player order. Also make sure the die cannot be rolled while it's being animated (see if button can be hidden while it's rolling)
         rollDieBtn.addActionListener(event -> onRollDie());
 
         controls.add(rollDieBtn);
@@ -124,33 +115,13 @@ public class GUIManager {
     }
 
     public Board createBoard() {
+        // TODO: Remove this. I forget what it's referring to
         // Using https://zetcode.com/gfx/java2d/introduction/ as boilerplate code to get a graphics window open
 
-        // TODO: Make sure the value of an entry is not the key of another entry
-        // TODO: Option to randomly generate this. make sure elements are never on the same row
-        Hashtable<Integer, Integer> moveToConfig = new Hashtable<Integer, Integer>() {
-            {put(1, 38);}
-            {put(4, 14);}
-            {put(9, 31);}
-            {put(16, 6);}
-            {put(21, 42);}
-            {put(28, 84);}
-            {put(36, 44);}
-            {put(48, 30);}
-            {put(51, 67);}
-            {put(62, 19);} // Most of the snake's head is on the 62
-            {put(64, 60);}
-            {put(64, 60);}
-            {put(71, 91);}
-            {put(80, 100);}
-            {put(93, 68);}
-            {put(95, 24);}
-            {put(97, 76);}
-            {put(98, 78);}
-        };
-
         // TODO: width and height should be their own variables probably
-        board = new Board(new Int2(10, 10), moveToConfig);
+
+        BoardSettings boardSettings = new BoardSettings();
+        board = new Board(boardSettings);
 
         return board;
     }
