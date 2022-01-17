@@ -84,4 +84,14 @@ public class LadderAndSnake {
         int dieSides = 6;
         return random.nextInt(1, dieSides + 1);
     }
+
+    public int getUniqueFlipDice(int excludeValue) {
+        int result = flipDice();
+
+        if (excludeValue == result) {
+            getUniqueFlipDice(excludeValue);
+        }
+
+        return result;
+    }
 }

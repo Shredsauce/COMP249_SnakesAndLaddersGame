@@ -8,7 +8,9 @@ import javax.swing.*;
 public class Board extends JPanel {
     public static int TILE_SIZE = 30;
     private Int2 size = new Int2(10, 10);
-
+    private int currentDieValue = 6;
+    private int previousDieValue = currentDieValue;
+    private double dieAngle;
     private Tile[][] tiles;
     private Player[] players;
 
@@ -100,7 +102,62 @@ public class Board extends JPanel {
             }
         }
 
+        drawDie(g2d);
+
         repaint();
+    }
+
+
+
+    private void drawDie(Graphics2D g2d) {
+        Int2 pos = new Int2(400, 20);
+        int size = 50;
+        int shadowOffset = 3;
+        int edgeOffset = 10;
+        int arcValue = 7;
+
+        int dotRadius = 6;
+
+        if (previousDieValue != currentDieValue) {
+            Random random = new Random();
+            dieAngle = random.nextDouble(0, 2*Math.PI);
+            previousDieValue = currentDieValue;
+        }
+        g2d.rotate(dieAngle, pos.x + size / 2, pos.y + size / 2);
+
+        g2d.setColor(Color.black);
+        g2d.fillRoundRect(pos.x, pos.y, size+shadowOffset, size+shadowOffset, arcValue, arcValue);
+        g2d.setColor(Color.white);
+        g2d.fillRoundRect(pos.x, pos.y, size, size, arcValue, arcValue);
+
+        int die = currentDieValue;
+        g2d.setColor(Color.black);
+
+        if (die == 1 || die == 3 || die == 5) {
+            drawCircle(g2d, new Int2(pos.x + size/2, pos.y + size/2), dotRadius); // Middle
+        }
+
+        if (die != 1){
+            drawCircle(g2d, new Int2(pos.x + edgeOffset, pos.y + edgeOffset), dotRadius); // Top left
+            drawCircle(g2d, new Int2(size + pos.x - edgeOffset, size + pos.y - edgeOffset), dotRadius); // Bottom right
+        }
+
+        if (die == 4 || die == 5 || die == 6) {
+            drawCircle(g2d, new Int2(pos.x + edgeOffset, size + pos.y - edgeOffset), dotRadius); // Bottom left
+            drawCircle(g2d, new Int2(size + pos.x - edgeOffset, pos.y + edgeOffset), dotRadius); // Top right
+        }
+
+        if (die == 6) {
+            drawCircle(g2d, new Int2(pos.x + edgeOffset, pos.y + size/2), dotRadius); // Middle left
+            drawCircle(g2d, new Int2(size + pos.x - edgeOffset, pos.y + size/2), dotRadius); // Middle right
+        }
+
+
+        g2d.rotate(-dieAngle, pos.x + size / 2, pos.y + size / 2);
+    }
+
+    private void drawCircle (Graphics2D g2d, Int2 center, int radius) {
+        g2d.fillOval(center.x-radius, center.y-radius, 2*radius, 2*radius);
     }
 
     private void drawBoard(Graphics2D g2d) {
@@ -268,6 +325,10 @@ public class Board extends JPanel {
         Font currentFont = g2d.getFont();
         Font newFont = currentFont.deriveFont(currentFont.getStyle(), fontSize);
         g2d.setFont(newFont);
+    }
+
+    public void setDieValue(int dieValue) {
+        currentDieValue = dieValue;
     }
 
     @Override

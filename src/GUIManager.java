@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Hashtable;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -28,6 +29,7 @@ public class GUIManager {
         JPanel controls = new JPanel();
 
         rollDieBtn = new JButton("Roll die");
+        // TODO: Make onRollDie a little more generic so it can be used to determine player order. Also make sure the die cannot be rolled while it's being animated
         rollDieBtn.addActionListener(event -> onRollDie());
 
         controls.add(rollDieBtn);
@@ -48,16 +50,16 @@ public class GUIManager {
                 if (game.getPlayers() == null || game.getPlayers().length == 0) continue;
 
                 // TODO: Put this stuff in a function
-                Tile goalTile = getBoard().getTile(newTileId);
+                Tile goalTile = board.getTile(newTileId);
                 Tile currentTile = player.getCurrentTile();
 
                 if (currentTile == null) continue;
 
                 while (currentTile.getTileId() < goalTile.getTileId()) {
-                    currentTile = getBoard().getTile(currentTile.getTileId() + 1);
+                    currentTile = board.getTile(currentTile.getTileId() + 1);
 
                     player.setCurrentTile(currentTile);
-                    System.out.println("Setting player to " + currentTile.getTileId());
+//                    System.out.println("Setting player to " + currentTile.getTileId());
 
                     try {
                         Thread.sleep(300);
@@ -68,7 +70,7 @@ public class GUIManager {
 
                 if (player.getCurrentTile().hasMoveTo()) {
                     int moveToTileId = player.getCurrentTile().getMoveToTileId();
-                    Tile moveToTile = getBoard().getTile(moveToTileId);
+                    Tile moveToTile = board.getTile(moveToTileId);
 
                     player.setCurrentTile(moveToTile);
                 }
@@ -79,15 +81,46 @@ public class GUIManager {
     }
 
     private void onRollDie() {
-        int roll = game.flipDice();
-        System.out.println(String.format("Player's roll is " + roll));
+        Thread thread = new Thread(() -> {
 
-        // TODO: Alternate players. Using first player for testing
-        Player currentPlayer = game.getPlayers()[0];
+            int dieValue = animateDie();
 
-        int newTileId = currentPlayer.getCurrentTile().getTileId() + roll;
+            // Wait a bit before actually moving the player
+            threadSleep(500);
 
-        movePlayerToTile(currentPlayer, newTileId);
+            // TODO: Alternate players. Using first player for testing
+            Player currentPlayer = game.getPlayers()[0];
+
+            int newTileId = currentPlayer.getCurrentTile().getTileId() + dieValue;
+
+            movePlayerToTile(currentPlayer, newTileId);
+        });
+        thread.start();
+    }
+
+    private int animateDie() {
+        int actualRoll = game.flipDice();
+//        System.out.println(String.format("Player's roll is " + actualRoll));
+
+        // Roll animation
+        int lastRoll = 0;
+        int numFakeRolls = 6;
+        int currentFakeRollIndex = 0;
+
+        while (currentFakeRollIndex < numFakeRolls){
+            int uniqueRoll = game.getUniqueFlipDice(lastRoll);
+            lastRoll = uniqueRoll;
+
+            board.setDieValue(uniqueRoll);
+
+            // Pause for a bit dice change
+            threadSleep(100);
+
+            currentFakeRollIndex++;
+        }
+
+        board.setDieValue(actualRoll);
+        return actualRoll;
     }
 
     public Board createBoard() {
@@ -122,7 +155,11 @@ public class GUIManager {
         return board;
     }
 
-    public Board getBoard() {
-        return board;
+    private void threadSleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
