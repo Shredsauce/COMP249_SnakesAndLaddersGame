@@ -10,6 +10,7 @@ public class GUIManager {
     public GUIManager(LadderAndSnake game) {
         this.game = game;
 
+        // TODO: Create button to regenerate board
         Board board = createBoard();
 
         animateShowBoard();
@@ -50,9 +51,7 @@ public class GUIManager {
 
                 while (currentTile.getTileId() < goalTile.getTileId()) {
                     currentTile = board.getTile(currentTile.getTileId() + 1);
-
                     player.setCurrentTile(currentTile);
-//                    System.out.println("Setting player to " + currentTile.getTileId());
 
                     try {
                         Thread.sleep(300);
@@ -93,7 +92,6 @@ public class GUIManager {
 
     private int animateDie() {
         int actualRoll = game.flipDice();
-//        System.out.println(String.format("Player's roll is " + actualRoll));
 
         // Roll animation
         int lastRoll = 0;
@@ -120,7 +118,7 @@ public class GUIManager {
         Thread thread = new Thread(() -> {
             int currentTile = 1;
             while(currentTile < board.getLastTile().getTileId()) {
-                threadSleep(5);
+                threadSleep(50);
                 currentTile += 1;
                 board.setEndTileIdForAnim(currentTile);
             }
@@ -128,17 +126,21 @@ public class GUIManager {
             board.setBoardAnimComplete();
         });
         thread.start();
-
-
     }
 
     public Board createBoard() {
         // TODO: Remove this. I forget what it's referring to
         // Using https://zetcode.com/gfx/java2d/introduction/ as boilerplate code to get a graphics window open
 
-        // TODO: width and height should be their own variables probably
-
         BoardSettings boardSettings = new BoardSettings();
+
+        // TODO: Uncomment for randomly generated board
+        /*
+        boardSettings.useDefault = false;
+        boardSettings.horizontalChance = 0.5f;
+        boardSettings.forwardChance = 0.5f;
+        */
+
         board = new Board(boardSettings);
 
         return board;

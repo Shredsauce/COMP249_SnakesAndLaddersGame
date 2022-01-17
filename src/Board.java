@@ -450,6 +450,7 @@ public class Board extends JPanel {
         int headWidth = TILE_SIZE/2;
         // TODO: Create TILE_HALF_SIZE
 
+        // TODO: Put this as a global variable somewhere
         double time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
         Color headColor = g2d.getColor();
@@ -506,8 +507,8 @@ public class Board extends JPanel {
         Int2 previousTileDir = new Int2(previousPos.x - pos.x, previousPos.y - pos.y);
         if (previousTileDir.x > 0) return 0;
         if (previousTileDir.x < 0) return Math.PI;
-        if (previousTileDir.y > 0) return (3*Math.PI)/2;
-        if (previousTileDir.y < 0) return Math.PI/2;
+        if (previousTileDir.y > 0) return Math.PI/2;
+        if (previousTileDir.y < 0) return (3*Math.PI)/2;
 
         return 0;
     }
