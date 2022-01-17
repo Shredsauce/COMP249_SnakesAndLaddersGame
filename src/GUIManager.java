@@ -1,61 +1,126 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.util.Hashtable;
+import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class GUIManager {
-    private static GUIManager instance;
+    private LadderAndSnake game;
 
+    private Board board;
+
+    // Only for testing.
     private JLabel label;
     private JFrame frame;
     private JPanel panel;
 
-    public GUIManager() {
-        instance = this;
+    public JButton rollDieBtn;
 
-        Init();
-    }
+    public GUIManager(LadderAndSnake game) {
+        this.game = game;
 
-    public static GUIManager getInstance() {
-        if (instance == null) {
-            System.out.println("Error: No instance found. Creating it.");
-            instance = new GUIManager();
-        }
+        Board board = createBoard();
 
-        return instance;
-    }
+        JFrame frame = new JFrame("");
+        Container content = frame.getContentPane();
+        content.setLayout(new BorderLayout());
+        content.add(board, BorderLayout.CENTER);
 
-    public void Init() {
-        frame = new JFrame();
+        JPanel controls = new JPanel();
 
-        // Buttons and labels from this tutorial: https://www.youtube.com/watch?v=5o3fMLPY7qY
-        JButton button = new JButton("Click");
-        button.addActionListener(event -> testEvent("Clicking on the click button"));
-        button.setBounds(3, 49, 400, 200);
+        rollDieBtn = new JButton("Roll die");
+        rollDieBtn.addActionListener(event -> onRollDie());
 
-        JButton anotherButton = new JButton("Here's another button");
-        anotherButton.addActionListener(event -> testEvent("Here's another buttonssss"));
+        controls.add(rollDieBtn);
 
-        label = new JLabel("Yeahhhhh");
+        content.add(controls, BorderLayout.NORTH);
 
-        panel = new JPanel();
-        panel.setLayout(null);
-//        panel.setBorder(BorderFactory.createEmptyBorder(30, 30, 10, 30));
-//        panel.setLayout(new GridLayout(0, 1));
-//        panel.add(button);
-//        panel.add(anotherButton);
-//        panel.add(label);
-
-        frame.add(panel, BorderLayout.CENTER);
+        frame.setSize(600, 600);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setTitle("Snakes and Ladders");
-        frame.pack();
-        frame.setSize(500, 500);
         frame.setVisible(true);
+
+        board.setPlayers(game.getPlayers());
     }
 
-    private void testEvent(String testText) {
-        System.out.println(testText);
+    public void play() throws InterruptedException {
+        long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
+        while (true) {
+            long timeSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
+            long time = timeSeconds - startTime;
+
+            Scanner scan = new Scanner(System.in);
+            int newTileId = scan.nextInt();
+
+            if (game.getPlayers() == null || game.getPlayers().length == 0) continue;
+
+            // TODO: Alternate players. Using first player for testing
+            Player currentPlayer = game.getPlayers()[0];
+
+            // TODO: Put this stuff in a function
+            Tile goalTile = getBoard().getTile(newTileId);
+            Tile currentTile = currentPlayer.getCurrentTile();
+
+            if (currentTile == null) continue;
+
+            while (currentTile.getTileId() < goalTile.getTileId()) {
+                currentTile = getBoard().getTile(currentTile.getTileId() + 1);
+
+                currentPlayer.setCurrentTile(currentTile);
+
+                Thread.sleep(10);
+            }
+
+            if (currentPlayer.getCurrentTile().hasMoveTo()) {
+                int moveToTileId = currentPlayer.getCurrentTile().getMoveToTileId();
+                Tile moveToTile = getBoard().getTile(moveToTileId);
+
+                currentPlayer.setCurrentTile(moveToTile);
+            }
+
+            Thread.sleep(10);
+        }
     }
 
+    private void onRollDie() {
+        int roll = game.flipDice();
+        System.out.println(String.format("Player's roll is " + roll));
+    }
 
+    public Board createBoard() {
+        // Using https://zetcode.com/gfx/java2d/introduction/ as boilerplate code to get a graphics window open
+
+        // TODO: Make sure the value of an entry is not the key of another entry
+        // TODO: Option to randomly generate this. make sure elements are never on the same row
+        Hashtable<Integer, Integer> moveToConfig = new Hashtable<Integer, Integer>() {
+            {put(1, 38);}
+            {put(4, 14);}
+            {put(9, 31);}
+            {put(16, 6);}
+            {put(21, 42);}
+            {put(28, 84);}
+            {put(36, 44);}
+            {put(48, 30);}
+            {put(51, 67);}
+            {put(62, 19);} // Most of the snake's head is on the 62
+            {put(64, 60);}
+            {put(64, 60);}
+            {put(71, 91);}
+            {put(80, 100);}
+            {put(93, 68);}
+            {put(95, 24);}
+            {put(97, 76);}
+            {put(98, 78);}
+        };
+
+        // TODO: width and height should be their own variables probably
+        board = new Board(new Int2(10, 10), moveToConfig);
+
+        return board;
+    }
+
+    public Board getBoard() {
+        return board;
+    }
 }

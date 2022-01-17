@@ -1,13 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
 import java.util.Scanner;
 
 
@@ -30,6 +24,7 @@ public class Driver implements KeyListener {
     }
 
     public static void main(String[] args) throws InterruptedException {
+
         // Hardcode number of players for testing
         int numPlayers = 2;
 
@@ -43,10 +38,11 @@ public class Driver implements KeyListener {
     		 //scan.close();
         }
 
-        GUIManager guiManager = new GUIManager();
         LadderAndSnake game = new LadderAndSnake(numPlayers);
-        game.setVisible(true);
-
-        game.play();
+        GUIManager guiManager = new GUIManager(game);
+        guiManager.play();
     }
+
+
+
 }

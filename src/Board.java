@@ -39,8 +39,7 @@ public class Board extends JPanel {
         return size.x * size.y;
     }
 
-    public Board(Player[] players, Int2 size, Hashtable<Integer, Integer> moveToConfig) {
-        this.players = players;
+    public Board(Int2 size, Hashtable<Integer, Integer> moveToConfig) {
         this.size = size;
 
         // TODO: Move to drawBoard function
@@ -67,6 +66,15 @@ public class Board extends JPanel {
         }
     }
 
+    public void setPlayers(Player[] players) {
+        this.players = players;
+
+        // Players should start off of the board and not on the first tile
+        for (int i = 0; i < players.length; i++) {
+            players[i].setCurrentTile(this.getTile(1));
+        }
+    }
+
     // TODO: Change name from doDrawing to something else. Also change the g2d variable name
     private void doDrawing(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
@@ -78,39 +86,20 @@ public class Board extends JPanel {
 
         drawMoveToElements(g2d);
 
-        for (int i = 0; i < players.length; i++) {
-            Player player = players[i];
+        if (players != null && players.length > 0) {
+            for (int i = 0; i < players.length; i++) {
+                Player player = players[i];
 
-            setFontSize(g2d, 30f);
-            Tile playerTile = player.getCurrentTile();
+                setFontSize(g2d, 30f);
+                Tile playerTile = player.getCurrentTile();
 
-            Int2 playerCoordinates = playerTile.getCoordinates();
+                Int2 playerCoordinates = playerTile.getCoordinates();
 
-            g2d.setColor(Color.white);
-            g2d.drawString(player.getIcon(), playerCoordinates.x * TILE_SIZE, playerCoordinates.y * TILE_SIZE + TILE_SIZE);
+                g2d.setColor(Color.white);
+                g2d.drawString(player.getIcon(), playerCoordinates.x * TILE_SIZE, playerCoordinates.y * TILE_SIZE + TILE_SIZE);
+            }
         }
 
-
-
-        /*
-        Random rd = new Random();
-
-        long time = System.currentTimeMillis();
-
-        float minStroke = 1f;
-        float maxStroke = 3f;
-
-        float weight = minStroke + maxStroke * rd.nextFloat();
-        BasicStroke stroke = new BasicStroke(weight);
-
-        g2d.setStroke(stroke);
-        g2d.setColor(new Color(100, 100, 100));
-        g2d.drawRect(20, 20, 50, 50);
-        g2d.setColor(new Color(0, 0, 0));
-        g2d.drawArc(20, 20, 50, 50, 0, 90);
-        g2d.drawArc(20, 20, 50, 50, 0, -90);
-        g2d.drawArc(0, 0, 100, 100, 0, 180);
-        */
         repaint();
     }
 
