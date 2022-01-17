@@ -6,4 +6,8 @@ public class Int2 {
         this.x = x;
         this.y = y;
     }
+
+    public Int2() {
+        // x and y default to 0
+    }
 }

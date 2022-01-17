@@ -37,6 +37,6 @@ public class Tile {
 
     public Int2 getPosition() {
         // TODO: Better way to do this without accessing TILE_SIZE this way?
-        return new Int2(coordinates.x * Board.TILE_SIZE, coordinates.y * Board.TILE_SIZE);
+        return new Int2(coordinates.x * Board.TILE_SIZE + Board.OFFSET.x, coordinates.y * Board.TILE_SIZE + Board.OFFSET.y);
     }
 }

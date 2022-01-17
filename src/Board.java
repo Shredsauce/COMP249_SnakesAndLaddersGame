@@ -7,10 +7,13 @@ import javax.swing.*;
 
 public class Board extends JPanel {
     public static int TILE_SIZE = 30;
+    public static Int2 OFFSET = new Int2(100, 100);
+    private int maxDiePositionOffset = 8;
     private Int2 size = new Int2(10, 10);
     private int currentDieValue = 6;
     private int previousDieValue = currentDieValue;
     private double dieAngle;
+    private Int2 diePositionOffset = new Int2();
     private Tile[][] tiles;
     private Player[] players;
 
@@ -31,10 +34,6 @@ public class Board extends JPanel {
 
         System.out.println("Error: Could not find tile at id " + tileId);
         return null;
-    }
-
-    public Int2 getBoardSize() {
-        return size;
     }
 
     private int getTotalTiles() {
@@ -81,8 +80,6 @@ public class Board extends JPanel {
     private void doDrawing(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.drawString("Snakes and ladders", 20, 20);
-        g2d.setColor(Color.white);
-        g2d.fillRect(0, 0, size.x*TILE_SIZE, size.y*TILE_SIZE);
 
         drawBoard(g2d);
 
@@ -92,22 +89,21 @@ public class Board extends JPanel {
             for (int i = 0; i < players.length; i++) {
                 Player player = players[i];
 
+                int shadowOffset = 1;
+
                 setFontSize(g2d, 30f);
                 Tile playerTile = player.getCurrentTile();
-
-                Int2 playerCoordinates = playerTile.getCoordinates();
+                g2d.setColor(Color.black);
+                g2d.drawString(player.getIcon(), playerTile.getPosition().x+shadowOffset,  playerTile.getPosition().y+shadowOffset+TILE_SIZE);
 
                 g2d.setColor(Color.white);
-                g2d.drawString(player.getIcon(), playerCoordinates.x * TILE_SIZE, playerCoordinates.y * TILE_SIZE + TILE_SIZE);
+                g2d.drawString(player.getIcon(), playerTile.getPosition().x,  playerTile.getPosition().y+TILE_SIZE);
             }
         }
 
         drawDie(g2d);
-
         repaint();
     }
-
-
 
     private void drawDie(Graphics2D g2d) {
         Int2 pos = new Int2(400, 20);
@@ -121,9 +117,12 @@ public class Board extends JPanel {
         if (previousDieValue != currentDieValue) {
             Random random = new Random();
             dieAngle = random.nextDouble(0, 2*Math.PI);
+            diePositionOffset = new Int2(random.nextInt(-maxDiePositionOffset, maxDiePositionOffset), random.nextInt(-maxDiePositionOffset, maxDiePositionOffset));
+
             previousDieValue = currentDieValue;
         }
         g2d.rotate(dieAngle, pos.x + size / 2, pos.y + size / 2);
+        g2d.translate(diePositionOffset.x, diePositionOffset.y);
 
         g2d.setColor(Color.black);
         g2d.fillRoundRect(pos.x, pos.y, size+shadowOffset, size+shadowOffset, arcValue, arcValue);
@@ -152,8 +151,8 @@ public class Board extends JPanel {
             drawCircle(g2d, new Int2(size + pos.x - edgeOffset, pos.y + size/2), dotRadius); // Middle right
         }
 
-
         g2d.rotate(-dieAngle, pos.x + size / 2, pos.y + size / 2);
+        g2d.translate(-diePositionOffset.x, -diePositionOffset.y);
     }
 
     private void drawCircle (Graphics2D g2d, Int2 center, int radius) {
@@ -165,8 +164,8 @@ public class Board extends JPanel {
             for (int x = 0; x < size.x; x++) {
                 Tile tile = tiles[x][y];
 
-                int xPos = TILE_SIZE * x;
-                int yPos = TILE_SIZE * y;
+                int xPos = TILE_SIZE * x + OFFSET.x;
+                int yPos = TILE_SIZE * y + OFFSET.y;
 
                 setFontSize(g2d, 10f);
 
@@ -259,7 +258,7 @@ public class Board extends JPanel {
         // Ladder is then rotated towards the end tile. Rotation is then reset as not to affect anything else
 
         g2d.setStroke(new BasicStroke(ladderThickness));
-        g2d.setColor(Color.green);
+        g2d.setColor(Color.gray);
 
         g2d.rotate(angle, startPosX, startPosY);
         g2d.drawLine(startPosX, startPosY + ladderWidth/2, startPosX+distance, startPosY + ladderWidth/2);
