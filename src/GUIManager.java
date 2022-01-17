@@ -1,5 +1,8 @@
+import javax.security.auth.callback.Callback;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Hashtable;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -8,13 +11,9 @@ public class GUIManager {
     private LadderAndSnake game;
 
     private Board board;
-
-    // Only for testing.
-    private JLabel label;
-    private JFrame frame;
-    private JPanel panel;
-
     public JButton rollDieBtn;
+
+    private Timer timer;
 
     public GUIManager(LadderAndSnake game) {
         this.game = game;
@@ -42,50 +41,53 @@ public class GUIManager {
         board.setPlayers(game.getPlayers());
     }
 
-    public void play() throws InterruptedException {
-        long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+    public void movePlayerToTile(Player player, int newTileId) {
+        Thread thread = new Thread(() -> {
+            boolean isPlayingMoveAnim = true;
+            while (isPlayingMoveAnim) {
+                if (game.getPlayers() == null || game.getPlayers().length == 0) continue;
 
-        while (true) {
-            long timeSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+                // TODO: Put this stuff in a function
+                Tile goalTile = getBoard().getTile(newTileId);
+                Tile currentTile = player.getCurrentTile();
 
-            long time = timeSeconds - startTime;
+                if (currentTile == null) continue;
 
-            Scanner scan = new Scanner(System.in);
-            int newTileId = scan.nextInt();
+                while (currentTile.getTileId() < goalTile.getTileId()) {
+                    currentTile = getBoard().getTile(currentTile.getTileId() + 1);
 
-            if (game.getPlayers() == null || game.getPlayers().length == 0) continue;
+                    player.setCurrentTile(currentTile);
+                    System.out.println("Setting player to " + currentTile.getTileId());
 
-            // TODO: Alternate players. Using first player for testing
-            Player currentPlayer = game.getPlayers()[0];
+                    try {
+                        Thread.sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
 
-            // TODO: Put this stuff in a function
-            Tile goalTile = getBoard().getTile(newTileId);
-            Tile currentTile = currentPlayer.getCurrentTile();
+                if (player.getCurrentTile().hasMoveTo()) {
+                    int moveToTileId = player.getCurrentTile().getMoveToTileId();
+                    Tile moveToTile = getBoard().getTile(moveToTileId);
 
-            if (currentTile == null) continue;
-
-            while (currentTile.getTileId() < goalTile.getTileId()) {
-                currentTile = getBoard().getTile(currentTile.getTileId() + 1);
-
-                currentPlayer.setCurrentTile(currentTile);
-
-                Thread.sleep(10);
+                    player.setCurrentTile(moveToTile);
+                }
+                isPlayingMoveAnim = false;
             }
-
-            if (currentPlayer.getCurrentTile().hasMoveTo()) {
-                int moveToTileId = currentPlayer.getCurrentTile().getMoveToTileId();
-                Tile moveToTile = getBoard().getTile(moveToTileId);
-
-                currentPlayer.setCurrentTile(moveToTile);
-            }
-
-            Thread.sleep(10);
-        }
+        });
+        thread.start();
     }
 
     private void onRollDie() {
         int roll = game.flipDice();
         System.out.println(String.format("Player's roll is " + roll));
+
+        // TODO: Alternate players. Using first player for testing
+        Player currentPlayer = game.getPlayers()[0];
+
+        int newTileId = currentPlayer.getCurrentTile().getTileId() + roll;
+
+        movePlayerToTile(currentPlayer, newTileId);
     }
 
     public Board createBoard() {

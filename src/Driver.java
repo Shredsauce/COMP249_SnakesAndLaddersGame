@@ -40,7 +40,6 @@ public class Driver implements KeyListener {
 
         LadderAndSnake game = new LadderAndSnake(numPlayers);
         GUIManager guiManager = new GUIManager(game);
-        guiManager.play();
     }
 
 
