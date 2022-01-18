@@ -4,9 +4,9 @@
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Random;
-import java.util.Scanner;
 
 public class LadderAndSnake {
     private int numPlayers;
@@ -15,72 +15,143 @@ public class LadderAndSnake {
     // TODO: Let players choose their jeton
     private char[] jetonOptions = {'♟', '⛄', '☠', '☕'};
 
+    Hashtable<Player, Integer> playerOrderRolls = new Hashtable<Player, Integer>();
+
+    private DiceRollAction diceRollMode = DiceRollAction.DETERMINE_ORDER;
+    private Player currentPlayer;
+
     public LadderAndSnake(int numPlayers) {
         this.numPlayers = numPlayers;
 
-        System.out.println(numPlayers);
+        System.out.println("Number of players: " + numPlayers);
         players = new Player[numPlayers];
 
         for (int i = 0; i < players.length; i++) {
             players[i] = new Player(i, jetonOptions[i]);
         }
 
-//        determinePlayerOrder();
+        currentPlayer = players[0];
     }
 
-    public Player[] getPlayers() {
-        return players;
+    public void onRollToDeterminePlayerOrder(int dieValue) {
+        playerOrderRolls.put(currentPlayer, dieValue);
+
+        debugDisplayPlayerOrderDetermineRolls();
+
+        if (playerOrderRolls.size() != players.length) {
+            currentPlayer = getNextPlayerForRollDetermine();
+        } else if (orderDetermineHasTies()) {
+
+//            lockPlayerOrderDetermineRolls();
+            removeTiedPlayersFromList();
+
+        } else {
+            System.out.println("Yay, we may begin!");
+            diceRollMode = DiceRollAction.MOVE;
+            sortPlayersByRoll();
+            debugDisplayPlayerOrderDetermineRolls();
+        }
     }
 
-    private void determinePlayerOrder() {
-		// TODO: This doesn't work properly at all
-
-        System.out.println(numPlayers + " players playing. Woohoo!");
-        System.out.println("Let's roll the die to see who starts.");
-
-        Scanner scanner = new Scanner(System.in);
-
-        Hashtable<Player, Integer> playerRolls = new Hashtable<Player, Integer>();
+    private Player getNextPlayerForRollDetermine() {
         for (Player player : players) {
-            playerRolls.put(player, 0);
+            if (!playerOrderRolls.containsKey(player)) {
+                return player;
+            }
         }
 
-        boolean orderDetermined = false;
+        return null;
+    }
 
-        while (!orderDetermined) {
-            Hashtable<Player, Integer> playerRollsThisRound = new Hashtable<Player, Integer>(playerRolls);
+    private boolean orderDetermineHasTies() {
+        for (Player player : players) {
+            for (Player otherPlayer : players) {
+                if (otherPlayer == player) continue;
 
-            for (int i = 0; i < players.length; i++) {
-                Player player = players[i];
-
-                if (player.hasUniqueRoll(playerRolls)) {
-                    continue;
-                }
-
-                int playerNumber = player.displayedPlayerNumber();
-
-                System.out.println(String.format("Player %s, press Enter to roll the die.", playerNumber));
-                scanner.nextLine();
-
-                int roll = flipDice();
-                playerRollsThisRound.put(player, roll);
-
-                System.out.println(String.format("Player %s's roll is %d", playerNumber, roll));
-
-            }
-
-            playerRolls = playerRollsThisRound;
-
-            for(Player player : players) {
-                if (!player.hasUniqueRoll(playerRolls)) {
-                    continue;
+                if (playerOrderRolls.get(player) == playerOrderRolls.get(otherPlayer)) {
+                    return true;
                 }
             }
-
-            orderDetermined = true;
         }
 
-        System.out.println("Order has been determined");
+        return false;
+    }
+
+    private void lockPlayerOrderDetermineRolls() {
+        for (Player player : players) {
+            boolean isTied = false;
+
+            for (Player otherPlayer : players) {
+                if (otherPlayer == player) continue;
+
+                if (playerOrderRolls.get(player) == playerOrderRolls.get(otherPlayer)) {
+                    isTied = true;
+                }
+            }
+
+            player.setOrderRollComplete(!isTied);
+        }
+    }
+
+    private void sortPlayersByRoll() {
+        if (orderDetermineHasTies()) {
+            System.out.println("Error: There are not supposed to be any ties at this point.");
+            return;
+        }
+
+        int currentIndex = 0;
+        while (currentIndex < players.length - 1) {
+            int highestIndex = -1;
+            int highest = -1000;
+
+            for (int i = currentIndex; i < players.length; i++) {
+                int playerRoll = playerOrderRolls.get(players[i]);
+
+                if (playerRoll > highest) {
+                    highest = playerRoll;
+                    highestIndex = i;
+                }
+            }
+
+            if (highestIndex > 0) {
+                // Swap highest rolling player with first
+                Player cachedFirstPlayer = players[currentIndex];
+                players[currentIndex] = players[highestIndex];
+                players[highestIndex] = cachedFirstPlayer;
+            }
+
+            currentIndex++;
+        }
+    }
+
+    private void debugDisplayPlayerOrderDetermineRolls() {
+        System.out.println("-------------------------------------------------------");
+        for (Player player : players) {
+            if (currentPlayer == player){
+                System.out.print("*");
+            }
+            System.out.println("Player "+player.getIcon() + " rolled " + playerOrderRolls.get(player));
+        }
+    }
+
+    private void removeTiedPlayersFromList() {
+        ArrayList<Player> playersToRemove = new ArrayList<Player>();
+
+        for (Player player : players) {
+            boolean isTied = false;
+
+            for (Player otherPlayer : players) {
+                if (otherPlayer == player) continue;
+
+                if (playerOrderRolls.get(player) == playerOrderRolls.get(otherPlayer)) {
+                    playersToRemove.add(player);
+                }
+            }
+        }
+
+        for (Player player : playersToRemove) {
+            playerOrderRolls.remove(player);
+        }
     }
 
     public int flipDice() {
@@ -96,5 +167,13 @@ public class LadderAndSnake {
         }
 
         return result;
+    }
+
+    public DiceRollAction getDiceRollMode() {
+        return diceRollMode;
+    }
+
+    public Player[] getPlayers() {
+        return players;
     }
 }

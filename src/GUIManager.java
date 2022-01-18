@@ -119,8 +119,11 @@ public class GUIManager extends JComponent {
 
     private void onRollDieAnimComplete(int dieValue, DiceRollAction diceRollAction) {
         switch(diceRollAction) {
+            case NONE:
+
+                break;
             case DETERMINE_ORDER:
-                
+                game.onRollToDeterminePlayerOrder(dieValue);
                 break;
             case MOVE:
                 // TODO: Alternate players. Using first player for testing
@@ -185,7 +188,7 @@ public class GUIManager extends JComponent {
         boardSettings.forwardChance = 0.5f;
         */
 
-        board = new Board(boardSettings);
+        board = new Board(game, boardSettings);
 
         return board;
     }

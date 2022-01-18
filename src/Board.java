@@ -41,11 +41,12 @@ public class Board extends JPanel {
         {put(98, 78);}
     };
 
-    public Int2 boardSize = new Int2(10, 10);
+    private LadderAndSnake game;
     private Player[] players;
     private boolean isWinState;
 
     // Board
+    public Int2 boardSize = new Int2(10, 10);
     private boolean boardShowAnimComplete;
     private Color boardColor = new Color(145, 92, 48);
 
@@ -103,8 +104,9 @@ public class Board extends JPanel {
         return boardSize.x * boardSize.y;
     }
 
-    public Board(BoardSettings boardSettings) {
+    public Board(LadderAndSnake game, BoardSettings boardSettings) {
         this.boardSize = boardSettings.boardSize;
+        this.game = game;
 
         Hashtable<Integer, Integer> moveToConfig = new Hashtable<Integer, Integer>();
 
@@ -121,7 +123,6 @@ public class Board extends JPanel {
         int currentTileId = 1;
         boolean allTilesFound = false;
         while (!allTilesFound) {
-            System.out.println(coord.toString() + " at id " + currentTileId);
             Tile tile = new Tile(currentTileId, coord);
             tiles[coord.x][coord.y] = tile;
 
@@ -154,7 +155,7 @@ public class Board extends JPanel {
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 nextDieMouseRollPos = new Int2(e.getX(), e.getY());
-                GUIManager.getInstance().rollDie(DiceRollAction.MOVE);
+                GUIManager.getInstance().rollDie(game.getDiceRollMode());
             }
         });
     }

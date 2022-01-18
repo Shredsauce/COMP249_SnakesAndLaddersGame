@@ -11,6 +11,7 @@ public class Player {
     private Tile currentTile;
     private char icon;
     private int playerIndex;
+    private boolean orderRollComplete;
 
     public Player(int playerIndex, char icon) {
         this.icon = icon;
@@ -43,5 +44,17 @@ public class Player {
         }
 
         return true;
+    }
+
+    public String toString() {
+        return "Player "+icon;
+    }
+
+    public boolean hasCompletedOrderRoll() {
+        return orderRollComplete;
+    }
+
+    public void setOrderRollComplete(boolean complete) {
+        orderRollComplete = complete;
     }
 }

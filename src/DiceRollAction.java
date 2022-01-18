@@ -5,6 +5,7 @@
 // -----------------------------------------------------
 
 public enum DiceRollAction {
+    NONE,
     DETERMINE_ORDER,
     MOVE,
     WIN_STATE
