@@ -7,6 +7,7 @@
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.swing.*;
@@ -62,8 +63,11 @@ public class Board extends JPanel {
     private int maxDiePositionOffset = 8;
     private double dieAngle;
     private Int2 diePositionOffset = new Int2();
+    private Int2 previousMousePos = new Int2();
     private int endTileIdForAnim;
     private Int2 nextDieMouseRollPos = OFFSCREEN_DIE_POS;
+    private double dieRollMagnitude;
+    private double dieRollAngle;
 
     public Tile getTile(int tileId) {
         // TODO: Use foreach maybe?
@@ -153,9 +157,24 @@ public class Board extends JPanel {
         // Mouse related stuff inspired by this: http://www.ssaurel.com/blog/learn-how-to-make-a-swing-painting-and-drawing-application/
         // TODO: De-spaghettify this a bit.
         addMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent e) {
+            public void mouseReleased(MouseEvent e) {
                 nextDieMouseRollPos = new Int2(e.getX(), e.getY());
                 GUIManager.getInstance().rollDie(game.getDiceRollMode());
+            }
+        });
+
+        addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                nextDieMouseRollPos = new Int2(e.getX(), e.getY());
+
+                double x = previousMousePos.x - nextDieMouseRollPos.x;
+                double y = previousMousePos.y - nextDieMouseRollPos.y;
+
+                // TODO: Do something with this or remove it
+                dieRollMagnitude = Math.sqrt(x*x + y*y);
+                dieRollAngle = Math.atan2(y, x);
+
+                previousMousePos = nextDieMouseRollPos;
             }
         });
     }
@@ -337,11 +356,13 @@ public class Board extends JPanel {
 
         if (previousDieValue != currentDieValue) {
             Random random = new Random();
+
             dieAngle = random.nextDouble(0, 2*Math.PI);
             diePositionOffset = new Int2(random.nextInt(-maxDiePositionOffset, maxDiePositionOffset), random.nextInt(-maxDiePositionOffset, maxDiePositionOffset));
 
             previousDieValue = currentDieValue;
         }
+
         g2d.rotate(dieAngle, pos.x + size / 2, pos.y + size / 2);
         g2d.translate(diePositionOffset.x, diePositionOffset.y);
 

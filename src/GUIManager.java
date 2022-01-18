@@ -151,7 +151,6 @@ public class GUIManager extends JComponent {
 
             board.setDieValue(uniqueRoll);
 
-            // Pause for a bit dice change
             threadSleep(100);
 
             currentFakeRollIndex++;
