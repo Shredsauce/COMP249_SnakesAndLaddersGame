@@ -134,6 +134,24 @@ public class LadderAndSnake {
         }
     }
 
+    public Player getNextPlayerForMove() {
+        int currentPlayerIndex = getPlayerIndex(currentPlayer);
+
+        return players[(currentPlayerIndex + 1) % players.length];
+    }
+
+    public int getPlayerIndex(Player player) {
+        int playerIndex = -1;
+        for (int i = 0; i < players.length; i++) {
+            if (players[i] == player) {
+                return i;
+            }
+        }
+
+        System.out.println("Error: Could not find player index for player " + player.toString());
+        return playerIndex;
+    }
+
     private void removeTiedPlayersFromList() {
         ArrayList<Player> playersToRemove = new ArrayList<Player>();
 
@@ -175,5 +193,13 @@ public class LadderAndSnake {
 
     public Player[] getPlayers() {
         return players;
+    }
+
+    public Player getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    public void setCurrentPlayer(Player player) {
+        currentPlayer = player;
     }
 }

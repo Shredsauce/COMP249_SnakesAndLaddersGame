@@ -126,10 +126,10 @@ public class GUIManager extends JComponent {
                 game.onRollToDeterminePlayerOrder(dieValue);
                 break;
             case MOVE:
-                // TODO: Alternate players. Using first player for testing
-                Player currentPlayer = game.getPlayers()[0];
+                Player currentPlayer = game.getCurrentPlayer();
                 int newTileId = currentPlayer.getCurrentTile().getTileId() + dieValue;
                 movePlayerToTile(currentPlayer, newTileId);
+                game.setCurrentPlayer(game.getNextPlayerForMove());
                 break;
             case WIN_STATE:
 

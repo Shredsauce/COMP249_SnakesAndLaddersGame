@@ -302,23 +302,27 @@ public class Board extends JPanel {
         }
 
         if (players != null && players.length > 0 && !isWinState) {
-            for (int i = 0; i < players.length; i++) {
-                Player player = players[i];
-
-                int shadowOffset = 1;
-
-                setFontSize(g2d, 30f);
-                Tile playerTile = player.getCurrentTile();
-                g2d.setColor(Color.black);
-                g2d.drawString(player.getIcon(), playerTile.getPosition().x+shadowOffset,  playerTile.getPosition().y+shadowOffset+TILE_SIZE);
-
-                g2d.setColor(Color.white);
-                g2d.drawString(player.getIcon(), playerTile.getPosition().x,  playerTile.getPosition().y+TILE_SIZE);
-            }
+            drawPlayers(g2d);
         }
 
         drawDie(g2d);
         repaint();
+    }
+
+    private void drawPlayers(Graphics2D g2d) {
+        for (int i = 0; i < players.length; i++) {
+            Player player = players[i];
+
+            int shadowOffset = 1;
+
+            setFontSize(g2d, 30f);
+            Tile playerTile = player.getCurrentTile();
+            g2d.setColor(Color.black);
+            g2d.drawString(player.getIcon(), playerTile.getPosition().x+shadowOffset,  playerTile.getPosition().y+shadowOffset+TILE_SIZE);
+
+            g2d.setColor(Color.white);
+            g2d.drawString(player.getIcon(), playerTile.getPosition().x,  playerTile.getPosition().y+TILE_SIZE);
+        }
     }
 
     private void drawDie(Graphics2D g2d) {
