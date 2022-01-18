@@ -105,9 +105,7 @@ public class GUIManager extends JComponent {
         thread.start();
     }
 
-    private Callback callback;
-
-    // TODO: Make die roll a little more generic so it can be used to determine player order. Also make sure the die cannot be rolled while it's being animated
+    // TODO: Make sure the die cannot be rolled while it's being animated
     public void rollDie(DiceRollAction diceRollAction) {
         Thread thread = new Thread(() -> {
             int dieValue = animateDie();
@@ -145,7 +143,10 @@ public class GUIManager extends JComponent {
         int numFakeRolls = 6;
         int currentFakeRollIndex = 0;
 
-        while (currentFakeRollIndex < numFakeRolls){
+        // Make sure the fake die animation rolling doesn't get repeats
+        // Roll until the number of fake rolls has exhausted, but also make sure we don't end on the same roll as the actual rolls
+        // Otherwise the die appears to stall at the end of its roll
+        while (currentFakeRollIndex < numFakeRolls || lastRoll == actualRoll){
             int uniqueRoll = game.getUniqueFlipDice(lastRoll);
             lastRoll = uniqueRoll;
 
@@ -175,9 +176,6 @@ public class GUIManager extends JComponent {
     }
 
     public Board createBoard() {
-        // TODO: Remove this. I forget what it's referring to
-        // Using https://zetcode.com/gfx/java2d/introduction/ as boilerplate code to get a graphics window open
-
         BoardSettings boardSettings = new BoardSettings();
 
         // TODO: Uncomment for randomly generated board

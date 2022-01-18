@@ -1,6 +1,6 @@
 // -----------------------------------------------------
 // Assignment 1
-//
+// Inspiration for using Graphics2D comes from https://zetcode.com/gfx/java2d/introduction/
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
 
@@ -15,8 +15,9 @@ import javax.swing.*;
 public class Board extends JPanel {
     public static Int2 OFFSCREEN_DIE_POS = new Int2(-100, -100);
     public static int TILE_SIZE = 30;
+    public static int TILE_HALF_SIZE = TILE_SIZE/2;
     public static int TILE_SPACING = 5;
-    public static int NUM_TAIL_TILES = 3;
+    public static int NUM_TAIL_TILES = 1;
     public static Int2 OFFSET = new Int2(100, 100);
 
     // TODO: Make sure the value of an entry is not the key of another entry
@@ -55,6 +56,7 @@ public class Board extends JPanel {
     private Tile[][] tiles;
     private Color oddTileColor = new Color(50, 90, 200);
     private Color evenTileColor = new Color(200, 200, 50);
+    private Tile startTile;
     private Tile lastTile;
 
     // Dice
@@ -70,7 +72,11 @@ public class Board extends JPanel {
     private double dieRollAngle;
 
     public Tile getTile(int tileId) {
-        // TODO: Use foreach maybe?
+        // The zeroth start tile is not part of the 2D array of tiles so it is handled this way
+        if (tileId == 0) {
+            return startTile;
+        }
+
         for (int y = 0; y < boardSize.y; y++) {
             for (int x = 0; x < boardSize.x; x++) {
                 Tile tile = tiles[x][y];
@@ -149,6 +155,8 @@ public class Board extends JPanel {
             currentTileId++;
         }
 
+        startTile = createStartTile();
+
         lastTile = getTile(currentTileId);
 
         moveToConfig = generateMoveToConfig(boardSettings);
@@ -177,6 +185,16 @@ public class Board extends JPanel {
                 previousMousePos = nextDieMouseRollPos;
             }
         });
+    }
+
+    private Tile createStartTile() {
+        if (startTile != null) {
+            System.out.println("Error: Start tile already exists");
+            return startTile;
+        }
+        Tile firstTile = getTile(1);
+        Int2 startTilePos = new Int2(firstTile.getPosition().x - TILE_SIZE, firstTile.getPosition().y);
+        return new Tile(0, startTilePos);
     }
 
     private Hashtable<Integer, Integer> generateMoveToConfig(BoardSettings boardSettings) {
@@ -259,6 +277,7 @@ public class Board extends JPanel {
         return sortedCoords;
     }
 
+    // TODO: No longer used
     public void loadDefaultBoard(Int2 boardSize) {
         Hashtable<Integer, Integer> moveToConfig = defaultMoveToConfig;
 
@@ -289,9 +308,8 @@ public class Board extends JPanel {
     public void setPlayers(Player[] players) {
         this.players = players;
 
-        // Players should start off of the board and not on the first tile
         for (int i = 0; i < players.length; i++) {
-            players[i].setCurrentTile(this.getTile(1));
+            players[i].setCurrentTile(this.getTile(0));
         }
     }
 
@@ -307,8 +325,7 @@ public class Board extends JPanel {
         return lastTile;
     }
 
-    // TODO: Change name from doDrawing to something else. Also change the g2d variable name
-    private void doDrawing(Graphics g) {
+    private void graphicsLoop(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         g2d.drawString("Snakes and ladders", 20, 20);
 
@@ -402,10 +419,7 @@ public class Board extends JPanel {
     }
 
     private void drawBoard(Graphics2D g2d, int tileEndId) {
-        drawBoardBackground();
-
-        g2d.setColor(boardColor);
-        g2d.fill3DRect(OFFSET.x, OFFSET.y, TILE_SIZE*boardSize.x, TILE_SIZE*boardSize.y, true);
+        drawBoardBackground(g2d);
 
         for (int y = 0; y < boardSize.y; y++) {
             for (int x = 0; x < boardSize.x; x++) {
@@ -427,8 +441,9 @@ public class Board extends JPanel {
         }
     }
 
-    private void drawBoardBackground() {
-
+    private void drawBoardBackground(Graphics2D g2d) {
+        g2d.setColor(boardColor);
+        g2d.fill3DRect(OFFSET.x, OFFSET.y, TILE_SIZE*boardSize.x, TILE_SIZE*boardSize.y, true);
     }
 
     private void drawTileNumber(Graphics2D g2d, int tileId, int xPos, int yPos) {
@@ -451,7 +466,7 @@ public class Board extends JPanel {
 
         if (shouldDrawSnakeHead(tileId, nextTile)) {
             drawBoardHead(g2d, tile, previousTile);
-        } else if (shouldDrawSnakeTail(tileId, previousTile)) {
+        } else if (shouldDrawSnakeTail(tileId)) {
             drawBoardTail(g2d, tile, previousTile);
         } else {
             Int2 tileCoord = tile.getCoordinates();
@@ -476,8 +491,8 @@ public class Board extends JPanel {
         return nextTile == null || tileId == endTileIdForAnim;
     }
 
-    private boolean shouldDrawSnakeTail(int tileId, Tile previousTile) {
-        return /*tileId <= NUM_TAIL_TILES || */previousTile == null;
+    private boolean shouldDrawSnakeTail(int tileId) {
+        return tileId <= NUM_TAIL_TILES;
     }
 
     private void drawHorizontalTile(Graphics2D g2d, Int2 pos) {
@@ -489,7 +504,7 @@ public class Board extends JPanel {
     }
 
     private void drawStraightTile(Graphics2D g2d, Int2 pos, boolean isVertical) {
-        Int2 cellCenter = new Int2(pos.x + TILE_SIZE/2, pos.y + TILE_SIZE/2);
+        Int2 cellCenter = new Int2(pos.x + TILE_HALF_SIZE, pos.y + TILE_HALF_SIZE);
         double cellRotation = isVertical ? Math.PI/2 : 0;
 
         g2d.rotate(cellRotation, cellCenter.x, cellCenter.y);
@@ -504,11 +519,10 @@ public class Board extends JPanel {
 
         double headAngle = getSnakeHeadAngle(pos, previousPos);
 
-        Int2 cellCenter = new Int2(pos.x + TILE_SIZE/2, pos.y + TILE_SIZE/2);
+        Int2 cellCenter = new Int2(pos.x + TILE_HALF_SIZE, pos.y + TILE_HALF_SIZE);
 
-        int headLength = (int)(1.5*TILE_SIZE/2);
-        int headWidth = TILE_SIZE/2;
-        // TODO: Create TILE_HALF_SIZE
+        int headLength = (int)(1.5*TILE_HALF_SIZE);
+        int headWidth = TILE_HALF_SIZE;
 
         // TODO: Put this as a global variable somewhere
         double time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
@@ -528,14 +542,14 @@ public class Board extends JPanel {
 
         // Tongue
         g2d.setStroke(new BasicStroke(4));
-        g2d.drawLine(pos.x - tonguePosX, pos.y + TILE_SIZE/2, pos.x, pos.y + TILE_SIZE/2);
+        g2d.drawLine(pos.x - tonguePosX, pos.y + TILE_HALF_SIZE, pos.x, pos.y + TILE_HALF_SIZE);
         g2d.setStroke(new BasicStroke(3));
 
-        g2d.rotate(tongueSplitAngle, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
-        g2d.drawLine(pos.x - tonguePosX - 7, pos.y + TILE_SIZE/2, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
-        g2d.rotate(-2*tongueSplitAngle, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
-        g2d.drawLine(pos.x - tonguePosX - 7, pos.y + TILE_SIZE/2, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
-        g2d.rotate(tongueSplitAngle, pos.x - tonguePosX, pos.y + TILE_SIZE/2);
+        g2d.rotate(tongueSplitAngle, pos.x - tonguePosX, pos.y + TILE_HALF_SIZE);
+        g2d.drawLine(pos.x - tonguePosX - 7, pos.y + TILE_HALF_SIZE, pos.x - tonguePosX, pos.y + TILE_HALF_SIZE);
+        g2d.rotate(-2*tongueSplitAngle, pos.x - tonguePosX, pos.y + TILE_HALF_SIZE);
+        g2d.drawLine(pos.x - tonguePosX - 7, pos.y + TILE_HALF_SIZE, pos.x - tonguePosX, pos.y + TILE_HALF_SIZE);
+        g2d.rotate(tongueSplitAngle, pos.x - tonguePosX, pos.y + TILE_HALF_SIZE);
 
         // Eyes
         g2d.setColor(headColor);
@@ -557,7 +571,7 @@ public class Board extends JPanel {
         // TODO: Make tail longer (more than 1 cell)
         // TODO: Rotate tail correctly
         Polygon poly = new Polygon();
-        poly.addPoint(pos.x, pos.y+TILE_SIZE/2);
+        poly.addPoint(pos.x, pos.y+TILE_HALF_SIZE);
         poly.addPoint(pos.x+TILE_SIZE, pos.y+TILE_SPACING);
         poly.addPoint(pos.x+TILE_SIZE, pos.y+TILE_SIZE-TILE_SPACING);
         g2d.fillPolygon(poly);
@@ -583,12 +597,12 @@ public class Board extends JPanel {
     }
 
     private void drawTurningTile(Graphics2D g2d, Int2 pos, double angle) {
-        Int2 cellCenter = new Int2(pos.x + TILE_SIZE/2, pos.y + TILE_SIZE/2);
+        Int2 cellCenter = new Int2(pos.x +  TILE_HALF_SIZE, pos.y + TILE_HALF_SIZE);
 
         g2d.rotate(angle, cellCenter.x, cellCenter.y);
         g2d.fillRoundRect(pos.x + TILE_SPACING, pos.y + TILE_SPACING, TILE_SIZE - 2*TILE_SPACING, TILE_SIZE - 2*TILE_SPACING, 20, 20);
-        g2d.fillRect(pos.x, pos.y + TILE_SPACING, TILE_SIZE/2, TILE_SIZE - 2*TILE_SPACING);
-        g2d.fillRect(pos.x + TILE_SPACING, pos.y, TILE_SIZE - 2*TILE_SPACING, TILE_SIZE/2);
+        g2d.fillRect(pos.x, pos.y + TILE_SPACING, TILE_HALF_SIZE, TILE_SIZE - 2*TILE_SPACING);
+        g2d.fillRect(pos.x + TILE_SPACING, pos.y, TILE_SIZE - 2*TILE_SPACING, TILE_HALF_SIZE);
         g2d.rotate(-angle, cellCenter.x, cellCenter.y);
     }
 
@@ -623,10 +637,10 @@ public class Board extends JPanel {
         Int2 startPos = startTile.getPosition();
         Int2 endPos = endTile.getPosition();
 
-        int startPosX = startPos.x + TILE_SIZE/2;
+        int startPosX = startPos.x + TILE_HALF_SIZE;
         int startPosY = startPos.y + ladderPosYOffset;
 
-        int endPosX = endPos.x + TILE_SIZE/2;
+        int endPosX = endPos.x + TILE_HALF_SIZE;
         int endPosY = endPos.y + TILE_SIZE - 2*ladderPosYOffset;
 
         double x = startPosX - endPosX;
@@ -666,10 +680,10 @@ public class Board extends JPanel {
         Int2 tileStartPos = startTile.getPosition();
         Int2 tileEndPos = endTile.getPosition();
 
-        int startPosX = tileStartPos.x + TILE_SIZE/2;
+        int startPosX = tileStartPos.x + TILE_HALF_SIZE;
         int startPosY = tileStartPos.y + snakePosYOffset;
 
-        int endPosX = tileEndPos.x + TILE_SIZE/2;
+        int endPosX = tileEndPos.x + TILE_HALF_SIZE;
         int endPosY = tileEndPos.y + TILE_SIZE - 2*snakePosYOffset;
 
         double x = startPosX - endPosX;
@@ -722,6 +736,6 @@ public class Board extends JPanel {
         if (!isWinState) {
             super.paintComponent(g);
         }
-        doDrawing(g);
+        graphicsLoop(g);
     }
 }
