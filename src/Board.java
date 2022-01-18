@@ -45,11 +45,14 @@ public class Board extends JPanel {
     private Player[] players;
     private boolean isWinState;
 
+    // Board
+    private boolean boardShowAnimComplete;
+    private Color boardColor = new Color(145, 92, 48);
+
     // Tiles
     private Tile[][] tiles;
     private Color oddTileColor = new Color(50, 90, 200);
     private Color evenTileColor = new Color(200, 200, 50);
-    private boolean boardShowAnimComplete;
     private Tile lastTile;
 
     // Dice
@@ -373,6 +376,11 @@ public class Board extends JPanel {
     }
 
     private void drawBoard(Graphics2D g2d, int tileEndId) {
+        drawBoardBackground();
+
+        g2d.setColor(boardColor);
+        g2d.fill3DRect(OFFSET.x, OFFSET.y, TILE_SIZE*boardSize.x, TILE_SIZE*boardSize.y, true);
+
         for (int y = 0; y < boardSize.y; y++) {
             for (int x = 0; x < boardSize.x; x++) {
                 Tile tile = tiles[x][y];
@@ -391,6 +399,10 @@ public class Board extends JPanel {
                 }
             }
         }
+    }
+
+    private void drawBoardBackground() {
+
     }
 
     private void drawTileNumber(Graphics2D g2d, int tileId, int xPos, int yPos) {
