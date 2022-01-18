@@ -1,9 +1,12 @@
-import javax.swing.*;
-import java.awt.*;
+// -----------------------------------------------------
+// Assignment 1
+//
+// Written by: Malcolm Arcand Laliberé - 26334792
+// -----------------------------------------------------
+
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
 
 public class LadderAndSnake {
     private int numPlayers;

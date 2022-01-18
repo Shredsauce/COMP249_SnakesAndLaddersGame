@@ -1,3 +1,9 @@
+// -----------------------------------------------------
+// Assignment 1
+//
+// Written by: Malcolm Arcand Laliberé - 26334792
+// -----------------------------------------------------
+
 public class Int2 {
     public int x;
     public int y;

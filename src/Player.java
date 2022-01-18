@@ -1,3 +1,9 @@
+// -----------------------------------------------------
+// Assignment 1
+//
+// Written by: Malcolm Arcand Laliberé - 26334792
+// -----------------------------------------------------
+
 import java.util.Hashtable;
 
 public class Player {

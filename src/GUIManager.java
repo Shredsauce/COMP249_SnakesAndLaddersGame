@@ -1,7 +1,12 @@
+// -----------------------------------------------------
+// Assignment 1
+//
+// Written by: Malcolm Arcand Laliberé - 26334792
+// -----------------------------------------------------
+
 import javax.security.auth.callback.Callback;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.util.Random;
 
 public class GUIManager extends JComponent {

@@ -1,9 +1,12 @@
-import javax.swing.*;
-import java.awt.*;
+// -----------------------------------------------------
+// Assignment 1
+//
+// Written by: Malcolm Arcand Laliberé - 26334792
+// -----------------------------------------------------
+
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.Scanner;
-
 
 public class Driver implements KeyListener {
     public static boolean isDebug = true;
