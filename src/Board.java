@@ -1,5 +1,6 @@
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -7,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 import javax.swing.*;
 
 public class Board extends JPanel {
+    public static Int2 OFFSCREEN_DIE_POS = new Int2(-100, -100);
     public static int TILE_SIZE = 30;
     public static int TILE_SPACING = 5;
     public static int NUM_TAIL_TILES = 3;
@@ -37,6 +39,7 @@ public class Board extends JPanel {
 
     public Int2 boardSize = new Int2(10, 10);
     private Player[] players;
+    private boolean isWinState;
 
     // Tiles
     private Tile[][] tiles;
@@ -52,7 +55,7 @@ public class Board extends JPanel {
     private double dieAngle;
     private Int2 diePositionOffset = new Int2();
     private int endTileIdForAnim;
-    private Int2 dieRollMousePos = new Int2(-100, -100);
+    private Int2 nextDieMouseRollPos = OFFSCREEN_DIE_POS;
 
     public Tile getTile(int tileId) {
         // TODO: Use foreach maybe?
@@ -143,8 +146,8 @@ public class Board extends JPanel {
         // TODO: De-spaghettify this a bit.
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
-                dieRollMousePos = new Int2(e.getX(), e.getY());
-                GUIManager.getInstance().rollDie();
+                nextDieMouseRollPos = new Int2(e.getX(), e.getY());
+                GUIManager.getInstance().rollDie(DiceRollAction.MOVE);
             }
         });
     }
@@ -282,13 +285,15 @@ public class Board extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.drawString("Snakes and ladders", 20, 20);
 
-        drawBoard(g2d, endTileIdForAnim);
+        if (!isWinState){
+            drawBoard(g2d, endTileIdForAnim);
+        }
 
-        if (boardShowAnimComplete){
+        if (boardShowAnimComplete && !isWinState){
             drawMoveToElements(g2d);
         }
 
-        if (players != null && players.length > 0) {
+        if (players != null && players.length > 0 && !isWinState) {
             for (int i = 0; i < players.length; i++) {
                 Player player = players[i];
 
@@ -314,7 +319,7 @@ public class Board extends JPanel {
         int edgeOffset = 10;
         int arcValue = 7;
 
-        Int2 pos = new Int2(dieRollMousePos.x - size/2, dieRollMousePos.y - size/2);
+        Int2 pos = new Int2(nextDieMouseRollPos.x - size/2, nextDieMouseRollPos.y - size/2);
 
         int dotRadius = 6;
 
@@ -662,9 +667,19 @@ public class Board extends JPanel {
         currentDieValue = dieValue;
     }
 
+    public void setWinState(boolean isWinState) {
+        this.isWinState = isWinState;
+    }
+
+    public void setDieRollPos(Int2 pos) {
+        this.nextDieMouseRollPos = pos;
+    }
+
     @Override
     public void paintComponent(Graphics g) {
-        super.paintComponent(g);
+        if (!isWinState) {
+            super.paintComponent(g);
+        }
         doDrawing(g);
     }
 }

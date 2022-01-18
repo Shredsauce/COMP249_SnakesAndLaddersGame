@@ -1,8 +1,13 @@
+import javax.security.auth.callback.Callback;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.Random;
 
 public class GUIManager extends JComponent {
     public static GUIManager instance;
+    public static int WIDTH = 600;
+    public static int HEIGHT = 600;
 
     private LadderAndSnake game;
 
@@ -29,19 +34,39 @@ public class GUIManager extends JComponent {
 
         JPanel controls = new JPanel();
 
-        rollDieBtn = new JButton("Roll die");
-        // TODO: Make onRollDie a little more generic so it can be used to determine player order. Also make sure the die cannot be rolled while it's being animated (see if button can be hidden while it's rolling)
-        rollDieBtn.addActionListener(event -> rollDie());
+        rollDieBtn = new JButton("Simulate win");
+        rollDieBtn.addActionListener(event -> onWin());
 
         controls.add(rollDieBtn);
 
         content.add(controls, BorderLayout.NORTH);
 
-        frame.setSize(600, 600);
+        frame.setSize(WIDTH, HEIGHT);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
 
         board.setPlayers(game.getPlayers());
+    }
+
+    private void onWin() {
+        Thread thread = new Thread(() -> {
+            board.setWinState(true);
+            // TODO: Put as variable somewhere
+            int numWinningDice = 400;
+            for (int i = 0; i < numWinningDice; i++) {
+                Random random = new Random();
+                Int2 pos = new Int2(random.nextInt(0, WIDTH), random.nextInt(0, HEIGHT));
+                board.setDieRollPos(pos);
+
+                rollDie(DiceRollAction.WIN_STATE);
+
+                threadSleep(5);
+            }
+
+            board.setDieRollPos(Board.OFFSCREEN_DIE_POS);
+            board.setWinState(false);
+        });
+        thread.start();
     }
 
     public void movePlayerToTile(Player player, int newTileId) {
@@ -60,11 +85,7 @@ public class GUIManager extends JComponent {
                     currentTile = board.getTile(currentTile.getTileId() + 1);
                     player.setCurrentTile(currentTile);
 
-                    try {
-                        Thread.sleep(300);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                    threadSleep(300);
                 }
 
                 if (player.getCurrentTile().hasMoveTo()) {
@@ -79,22 +100,33 @@ public class GUIManager extends JComponent {
         thread.start();
     }
 
-    public void rollDie() {
+    private Callback callback;
+
+    // TODO: Make die roll a little more generic so it can be used to determine player order. Also make sure the die cannot be rolled while it's being animated
+    public void rollDie(DiceRollAction diceRollAction) {
         Thread thread = new Thread(() -> {
-
             int dieValue = animateDie();
-
-            // Wait a bit before actually moving the player
             threadSleep(500);
-
-            // TODO: Alternate players. Using first player for testing
-            Player currentPlayer = game.getPlayers()[0];
-
-            int newTileId = currentPlayer.getCurrentTile().getTileId() + dieValue;
-
-            movePlayerToTile(currentPlayer, newTileId);
+            onRollDieAnimComplete(dieValue, diceRollAction);
         });
         thread.start();
+    }
+
+    private void onRollDieAnimComplete(int dieValue, DiceRollAction diceRollAction) {
+        switch(diceRollAction) {
+            case DETERMINE_ORDER:
+                
+                break;
+            case MOVE:
+                // TODO: Alternate players. Using first player for testing
+                Player currentPlayer = game.getPlayers()[0];
+                int newTileId = currentPlayer.getCurrentTile().getTileId() + dieValue;
+                movePlayerToTile(currentPlayer, newTileId);
+                break;
+            case WIN_STATE:
+
+                break;
+        }
     }
 
     private int animateDie() {
