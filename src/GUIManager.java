@@ -1,13 +1,20 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class GUIManager {
+public class GUIManager extends JComponent {
+    public static GUIManager instance;
+
     private LadderAndSnake game;
 
     private Board board;
     public JButton rollDieBtn;
 
+    public static GUIManager getInstance() {
+        return instance;
+    }
+
     public GUIManager(LadderAndSnake game) {
+        instance = this;
         this.game = game;
 
         // TODO: Create button to regenerate board
@@ -24,7 +31,7 @@ public class GUIManager {
 
         rollDieBtn = new JButton("Roll die");
         // TODO: Make onRollDie a little more generic so it can be used to determine player order. Also make sure the die cannot be rolled while it's being animated (see if button can be hidden while it's rolling)
-        rollDieBtn.addActionListener(event -> onRollDie());
+        rollDieBtn.addActionListener(event -> rollDie());
 
         controls.add(rollDieBtn);
 
@@ -72,7 +79,7 @@ public class GUIManager {
         thread.start();
     }
 
-    private void onRollDie() {
+    public void rollDie() {
         Thread thread = new Thread(() -> {
 
             int dieValue = animateDie();

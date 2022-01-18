@@ -1,5 +1,7 @@
 
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.swing.*;
@@ -50,6 +52,7 @@ public class Board extends JPanel {
     private double dieAngle;
     private Int2 diePositionOffset = new Int2();
     private int endTileIdForAnim;
+    private Int2 dieRollMousePos = new Int2(-100, -100);
 
     public Tile getTile(int tileId) {
         // TODO: Use foreach maybe?
@@ -135,6 +138,15 @@ public class Board extends JPanel {
 
         moveToConfig = generateMoveToConfig(boardSettings);
         applyMoveToConfig(moveToConfig);
+
+        // Mouse related stuff inspired by this: http://www.ssaurel.com/blog/learn-how-to-make-a-swing-painting-and-drawing-application/
+        // TODO: De-spaghettify this a bit.
+        addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                dieRollMousePos = new Int2(e.getX(), e.getY());
+                GUIManager.getInstance().rollDie();
+            }
+        });
     }
 
     private Hashtable<Integer, Integer> generateMoveToConfig(BoardSettings boardSettings) {
@@ -297,11 +309,12 @@ public class Board extends JPanel {
     }
 
     private void drawDie(Graphics2D g2d) {
-        Int2 pos = new Int2(400, 20);
         int size = 50;
         int shadowOffset = 3;
         int edgeOffset = 10;
         int arcValue = 7;
+
+        Int2 pos = new Int2(dieRollMousePos.x - size/2, dieRollMousePos.y - size/2);
 
         int dotRadius = 6;
 
