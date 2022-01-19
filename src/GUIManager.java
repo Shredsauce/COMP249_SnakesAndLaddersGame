@@ -39,8 +39,9 @@ public class GUIManager extends JComponent {
 
         JPanel controls = new JPanel();
 
+        // TODO: Remove this
         rollDieBtn = new JButton("Simulate win");
-        rollDieBtn.addActionListener(event -> onWin());
+        rollDieBtn.addActionListener(event -> onWin(game.getPlayers()[0]));
 
         controls.add(rollDieBtn);
 
@@ -53,7 +54,9 @@ public class GUIManager extends JComponent {
         board.setPlayers(game.getPlayers());
     }
 
-    private void onWin() {
+    private void onWin(Player player) {
+        System.out.println(player.toString() + " wins!");
+
         Thread thread = new Thread(() -> {
             board.setWinState(true);
             // TODO: Put as variable somewhere
@@ -65,6 +68,7 @@ public class GUIManager extends JComponent {
 
                 rollDie(DiceRollAction.WIN_STATE);
 
+                // TODO: Put as variable somewhere
                 threadSleep(5);
             }
 
@@ -81,25 +85,50 @@ public class GUIManager extends JComponent {
                 if (game.getPlayers() == null || game.getPlayers().length == 0) continue;
 
                 // TODO: Put this stuff in a function
-                Tile goalTile = board.getTile(newTileId);
                 Tile currentTile = player.getCurrentTile();
 
                 if (currentTile == null) continue;
 
-                while (currentTile.getTileId() < goalTile.getTileId()) {
-                    currentTile = board.getTile(currentTile.getTileId() + 1);
+                int lastTileId = board.getLastTile().getTileId();
+                boolean moveForwards = true;
+
+                int numMovesToMake = newTileId - currentTile.getTileId();
+                int numMovesMade = 0;
+
+                while (numMovesMade < numMovesToMake) {
+                    int currentTileId = currentTile.getTileId();
+
+                    if (currentTileId == lastTileId && newTileId != lastTileId) {
+                        moveForwards = false;
+                    }
+
+                    int nextTileId = currentTileId + (moveForwards ? 1 : -1);
+
+                    numMovesMade++;
+
+                    System.out.println("Set player to tile " + nextTileId);
+
+                    currentTile = board.getTile(nextTileId);
                     player.setCurrentTile(currentTile);
 
                     threadSleep(300);
                 }
 
+                // If tile has a move-to (snake or ladder), move the player to move-to's tile
                 if (player.getCurrentTile().hasMoveTo()) {
                     int moveToTileId = player.getCurrentTile().getMoveToTileId();
+
                     Tile moveToTile = board.getTile(moveToTileId);
 
                     player.setCurrentTile(moveToTile);
                 }
+
                 isPlayingMoveAnim = false;
+
+                if (player.getCurrentTile().getTileId() == lastTileId) {
+                    onWin(player);
+                }
+
             }
         });
         thread.start();
@@ -175,6 +204,7 @@ public class GUIManager extends JComponent {
         thread.start();
     }
 
+    // TODO: This should be in the Board class
     public Board createBoard() {
         BoardSettings boardSettings = new BoardSettings();
 
