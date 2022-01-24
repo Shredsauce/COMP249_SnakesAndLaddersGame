@@ -3,5 +3,5 @@ public enum GameState {
     CHOOSE_PLAYERS,
     CHOOSE_PLAYER_ORDER,
     BOARD_CREATION_ANIMATION,
-    PLAY,
+    PLAY, MAIN_MENU,
 }

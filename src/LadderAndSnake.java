@@ -24,17 +24,11 @@ public class LadderAndSnake {
 
     public LadderAndSnake(int numPlayers) {
         this.gameState = GameState.CHOOSE_PLAYERS;
+    }
 
-//        this.numPlayers = numPlayers;
 
-//        System.out.println("Number of players: " + numPlayers);
-//        players = new Player[numPlayers];
-
-//        for (int i = 0; i < players.length; i++) {
-//            players[i] = new Player(i, jetonOptions[i]);
-//        }
-//
-//        currentPlayer = players[0];
+    public void start() {
+        currentPlayer = players[0];
     }
 
     public void onRollToDeterminePlayerOrder(int dieValue) {
@@ -48,10 +42,13 @@ public class LadderAndSnake {
             removeTiedPlayersFromList();
         } else {
             System.out.println("Yay, we may begin!");
+
+            gameState = GameState.PLAY;
+            GUIManager.getInstance().redraw();
+
             diceRollMode = DiceRollAction.MOVE;
             sortPlayersByRoll();
             hasDeterminedPlayerOrder = true;
-            gameState = GameState.PLAY;
             debugDisplayPlayerOrderDetermineRolls();
         }
     }

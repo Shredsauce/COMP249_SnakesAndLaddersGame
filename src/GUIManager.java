@@ -22,7 +22,8 @@ public class GUIManager extends JComponent {
 
     private JFrame frame;
     private Container mainContainer;
-    private JPanel startControls;
+    private JPanel choosePlayersPanel;
+    private JPanel footerPanel;
     private Container startBtnContainer;
     private Board board;
     public JButton rollDieBtn;
@@ -35,7 +36,7 @@ public class GUIManager extends JComponent {
         instance = this;
         this.game = game;
 
-        redrawMainMenu();
+        redraw();
     }
 
     private void closeWindow() {
@@ -46,27 +47,40 @@ public class GUIManager extends JComponent {
         hasMainMenuBeenInit = false;
     }
 
-    private void redrawMainMenu() {
+    public void redraw() {
         tryInitMainMenu();
 
+        clearPanels();
+
         switch(game.getGameState()) {
+            case NONE:
+                break;
             case CHOOSE_PLAYERS:
                 displayPossiblePlayerButtons(game);
                 tryDisplayStartButton();
                 break;
             case CHOOSE_PLAYER_ORDER:
-
+                board = createBoard();
+                mainContainer.add(board, BorderLayout.CENTER);
+                tryDisplayCancelButton();
+                break;
+            case BOARD_CREATION_ANIMATION:
                 break;
             case PLAY:
-                Board board = createBoard();
+                board = createBoard();
                 board.setPlayers(game.getPlayers());
                 animateShowBoard();
-                this.mainContainer.add(board, BorderLayout.CENTER);
+                mainContainer.add(board, BorderLayout.CENTER);
+                tryDisplayCancelButton();
+                break;
+            case MAIN_MENU:
 
+                tryDisplayStartButton();
                 break;
         }
 
-        mainContainer.add(startControls, BorderLayout.NORTH);
+        mainContainer.add(choosePlayersPanel, BorderLayout.NORTH);
+        mainContainer.add(footerPanel, BorderLayout.SOUTH);
 
         frame.setSize(WIDTH, HEIGHT);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -82,7 +96,8 @@ public class GUIManager extends JComponent {
         if (!hasMainMenuBeenInit) {
             frame = new JFrame("") ;
             mainContainer = new Container();
-            startControls = new JPanel();
+            choosePlayersPanel = new JPanel();
+            footerPanel = new JPanel();
 
             mainContainer = frame.getContentPane();
             mainContainer.setLayout(new BorderLayout());
@@ -91,15 +106,25 @@ public class GUIManager extends JComponent {
         }
     }
 
-    private void displayPossiblePlayerButtons(LadderAndSnake game) {
-        boolean allChosen = haveAllPlayersBeenChosen();
+    private void clearPanels() {
+        // Remove existing buttons from the panels.
+        Component[] components = mainContainer.getComponents();
 
-        // Remove existing player buttons by removing any components that were added to the parent JPanel
-        Component[] components = startControls.getComponents();
         for (Component component : components) {
-            startControls.remove(component);
-        }
+            if (component instanceof JPanel panel) {
 
+                Component[] subComponents = panel.getComponents();
+                for (Component subComponent : subComponents) {
+                    panel.remove(subComponent);
+                }
+
+                mainContainer.remove(component);
+            }
+        }
+    }
+
+
+    private void displayPossiblePlayerButtons(LadderAndSnake game) {
         for (char jetonOption : game.getJetonOptions()) {
             if (isJetonChosenByPlayer(jetonOption)) {
                 continue;
@@ -107,7 +132,7 @@ public class GUIManager extends JComponent {
  
             JButton choosePlayerBtn = new JButton(""+jetonOption);
             choosePlayerBtn.addActionListener(event -> onPlayerSelected(jetonOption));
-            startControls.add(choosePlayerBtn);
+            choosePlayersPanel.add(choosePlayerBtn);
         }
     }
 
@@ -124,35 +149,51 @@ public class GUIManager extends JComponent {
     }
 
     private void onPlayerSelected(char jetonOption) {
-
         System.out.println("on display selectasdf " + game.getPlayers().length);
-
 
         Player newPlayer = new Player(numPlayersChosen++, jetonOption);
         game.addPlayer(newPlayer);
         System.out.println(newPlayer.getIcon() + " wants to play!");
 
-        redrawMainMenu();
+        if (game.getPlayers().length == game.getJetonOptions().length) {
+            startGame();
+        } else {
+            redraw();
+        }
     }
 
     private void tryDisplayStartButton() {
         if (game.getPlayers().length < minPlayerCount) return;
+        if (footerPanel.getComponents().length > 0) return;
 
         JButton startGameBtn = new JButton("Start game");
         startGameBtn.addActionListener(event -> startGame());
-        startControls.add(startGameBtn);
+        footerPanel.add(startGameBtn);
     }
 
     private void startGame() {
-        game.setGameState(GameState.PLAY);
-        redrawMainMenu();
+        if (game.hasDeterminedPlayerOrder()) {
+            game.setGameState(GameState.PLAY);
+        } else {
+            game.setGameState(GameState.CHOOSE_PLAYER_ORDER);
+        }
+
+        game.start();
+        redraw();
     }
 
-    private boolean haveAllPlayersBeenChosen() {
+    private void tryDisplayCancelButton() {
+        JButton cancelGameBtn = new JButton("Cancel game");
+        footerPanel.add(cancelGameBtn);
 
-        return false;
+        cancelGameBtn.addActionListener(event -> onCancelGame());
+        footerPanel.add(cancelGameBtn);
     }
 
+    private void onCancelGame() {
+        game.setGameState(GameState.MAIN_MENU);
+        redraw();
+    }
 
     private void onWin(Player player) {
         System.out.println(player.toString() + " wins!");
@@ -290,8 +331,16 @@ public class GUIManager extends JComponent {
         return actualRoll;
     }
 
+    private Thread animateShowBoardThread;
+
     private void animateShowBoard() {
-        Thread thread = new Thread(() -> {
+        if (animateShowBoardThread != null) {
+            // Using Thread.stop even though it is deprecated because it's the easiest way to stop the currently running thread
+            animateShowBoardThread.stop();
+            animateShowBoardThread = null;
+        }
+
+        animateShowBoardThread = new Thread(() -> {
             int currentTile = 1;
             while(currentTile < board.getLastTile().getTileId()) {
                 threadSleep(50);
@@ -301,7 +350,7 @@ public class GUIManager extends JComponent {
 
             board.setBoardAnimComplete();
         });
-        thread.start();
+        animateShowBoardThread.start();
     }
 
     // TODO: This should be in the Board class
