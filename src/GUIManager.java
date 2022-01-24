@@ -4,7 +4,6 @@
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
 
-import javax.security.auth.callback.Callback;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
@@ -14,8 +13,17 @@ public class GUIManager extends JComponent {
     public static int WIDTH = 600;
     public static int HEIGHT = 600;
 
-    private LadderAndSnake game;
+    private int minPlayerCount = 2;
+    private int maxPlayerCount = 4;
 
+    private LadderAndSnake game;
+    private int numPlayersChosen;
+    private boolean hasMainMenuBeenInit;
+
+    private JFrame frame;
+    private Container mainContainer;
+    private JPanel startControls;
+    private Container startBtnContainer;
     private Board board;
     public JButton rollDieBtn;
 
@@ -27,32 +35,124 @@ public class GUIManager extends JComponent {
         instance = this;
         this.game = game;
 
-        // TODO: Create button to regenerate board
-        Board board = createBoard();
+        redrawMainMenu();
+    }
 
-        animateShowBoard();
+    private void closeWindow() {
+        if (frame != null) {
+            frame.setVisible(false);
+            frame.dispose();
+        }
+        hasMainMenuBeenInit = false;
+    }
 
-        JFrame frame = new JFrame("");
-        Container content = frame.getContentPane();
-        content.setLayout(new BorderLayout());
-        content.add(board, BorderLayout.CENTER);
+    private void redrawMainMenu() {
+        tryInitMainMenu();
 
-        JPanel controls = new JPanel();
+        switch(game.getGameState()) {
+            case CHOOSE_PLAYERS:
+                displayPossiblePlayerButtons(game);
+                tryDisplayStartButton();
+                break;
+            case CHOOSE_PLAYER_ORDER:
 
-        // TODO: Remove this
-        rollDieBtn = new JButton("Simulate win");
-        rollDieBtn.addActionListener(event -> onWin(game.getPlayers()[0]));
+                break;
+            case PLAY:
+                Board board = createBoard();
+                board.setPlayers(game.getPlayers());
+                animateShowBoard();
+                this.mainContainer.add(board, BorderLayout.CENTER);
 
-        controls.add(rollDieBtn);
+                break;
+        }
 
-        content.add(controls, BorderLayout.NORTH);
+        mainContainer.add(startControls, BorderLayout.NORTH);
 
         frame.setSize(WIDTH, HEIGHT);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         frame.setVisible(true);
 
-        board.setPlayers(game.getPlayers());
+
+
+        frame.repaint();
     }
+
+    private void tryInitMainMenu() {
+        if (!hasMainMenuBeenInit) {
+            frame = new JFrame("") ;
+            mainContainer = new Container();
+            startControls = new JPanel();
+
+            mainContainer = frame.getContentPane();
+            mainContainer.setLayout(new BorderLayout());
+
+            hasMainMenuBeenInit = true;
+        }
+    }
+
+    private void displayPossiblePlayerButtons(LadderAndSnake game) {
+        boolean allChosen = haveAllPlayersBeenChosen();
+
+        // Remove existing player buttons by removing any components that were added to the parent JPanel
+        Component[] components = startControls.getComponents();
+        for (Component component : components) {
+            startControls.remove(component);
+        }
+
+        for (char jetonOption : game.getJetonOptions()) {
+            if (isJetonChosenByPlayer(jetonOption)) {
+                continue;
+            }
+ 
+            JButton choosePlayerBtn = new JButton(""+jetonOption);
+            choosePlayerBtn.addActionListener(event -> onPlayerSelected(jetonOption));
+            startControls.add(choosePlayerBtn);
+        }
+    }
+
+    private boolean isJetonChosenByPlayer(char jeton) {
+        for (char jetonOption : game.getJetonOptions()) {
+            for (Player player : game.getPlayers()) {
+                if (player.getIcon() == jeton) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void onPlayerSelected(char jetonOption) {
+
+        System.out.println("on display selectasdf " + game.getPlayers().length);
+
+
+        Player newPlayer = new Player(numPlayersChosen++, jetonOption);
+        game.addPlayer(newPlayer);
+        System.out.println(newPlayer.getIcon() + " wants to play!");
+
+        redrawMainMenu();
+    }
+
+    private void tryDisplayStartButton() {
+        if (game.getPlayers().length < minPlayerCount) return;
+
+        JButton startGameBtn = new JButton("Start game");
+        startGameBtn.addActionListener(event -> startGame());
+        startControls.add(startGameBtn);
+    }
+
+    private void startGame() {
+        game.setGameState(GameState.PLAY);
+        redrawMainMenu();
+    }
+
+    private boolean haveAllPlayersBeenChosen() {
+
+        return false;
+    }
+
 
     private void onWin(Player player) {
         System.out.println(player.toString() + " wins!");

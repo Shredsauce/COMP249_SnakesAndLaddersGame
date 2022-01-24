@@ -11,7 +11,7 @@ import java.util.Random;
 public class LadderAndSnake {
     private int numPlayers;
     Random random = new Random();
-    private Player[] players;
+    private Player[] players = new Player[0];
     // TODO: Let players choose their jeton
     private char[] jetonOptions = {'♟', '⛄', '☠', '☕'};
 
@@ -19,18 +19,22 @@ public class LadderAndSnake {
 
     private DiceRollAction diceRollMode = DiceRollAction.DETERMINE_ORDER;
     private Player currentPlayer;
+    private GameState gameState;
+    private boolean hasDeterminedPlayerOrder;
 
     public LadderAndSnake(int numPlayers) {
-        this.numPlayers = numPlayers;
+        this.gameState = GameState.CHOOSE_PLAYERS;
 
-        System.out.println("Number of players: " + numPlayers);
-        players = new Player[numPlayers];
+//        this.numPlayers = numPlayers;
 
-        for (int i = 0; i < players.length; i++) {
-            players[i] = new Player(i, jetonOptions[i]);
-        }
+//        System.out.println("Number of players: " + numPlayers);
+//        players = new Player[numPlayers];
 
-        currentPlayer = players[0];
+//        for (int i = 0; i < players.length; i++) {
+//            players[i] = new Player(i, jetonOptions[i]);
+//        }
+//
+//        currentPlayer = players[0];
     }
 
     public void onRollToDeterminePlayerOrder(int dieValue) {
@@ -41,16 +45,19 @@ public class LadderAndSnake {
         if (playerOrderRolls.size() != players.length) {
             currentPlayer = getNextPlayerForRollDetermine();
         } else if (orderDetermineHasTies()) {
-
-//            lockPlayerOrderDetermineRolls();
             removeTiedPlayersFromList();
-
         } else {
             System.out.println("Yay, we may begin!");
             diceRollMode = DiceRollAction.MOVE;
             sortPlayersByRoll();
+            hasDeterminedPlayerOrder = true;
+            gameState = GameState.PLAY;
             debugDisplayPlayerOrderDetermineRolls();
         }
+    }
+
+    public boolean hasDeterminedPlayerOrder() {
+        return hasDeterminedPlayerOrder;
     }
 
     private Player getNextPlayerForRollDetermine() {
@@ -195,11 +202,35 @@ public class LadderAndSnake {
         return players;
     }
 
+    public void addPlayer(Player player) {
+        Player[] incrementedPlayerList = new Player[players.length + 1];
+
+        for (int i = 0; i < players.length; i++) {
+            incrementedPlayerList[i] = players[i];
+            System.out.println("i: " + i);
+        }
+        incrementedPlayerList[players.length] = player;
+
+        players = incrementedPlayerList;
+    }
+
     public Player getCurrentPlayer() {
         return currentPlayer;
     }
 
     public void setCurrentPlayer(Player player) {
         currentPlayer = player;
+    }
+
+    public char[] getJetonOptions() {
+        return jetonOptions;
+    }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 }

@@ -64,8 +64,8 @@ public class Board extends JPanel {
     private int previousDieValue = currentDieValue;
     private int maxDiePositionOffset = 8;
     private double dieAngle;
-    private Int2 diePositionOffset = new Int2();
-    private Int2 previousMousePos = new Int2();
+    private Int2 diePositionOffset = new Int2(0, 0);
+    private Int2 previousMousePos = new Int2(0, 0);
     private int endTileIdForAnim;
     private Int2 nextDieMouseRollPos = OFFSCREEN_DIE_POS;
     private double dieRollMagnitude;
@@ -354,10 +354,10 @@ public class Board extends JPanel {
             setFontSize(g2d, 30f);
             Tile playerTile = player.getCurrentTile();
             g2d.setColor(Color.black);
-            g2d.drawString(player.getIcon(), playerTile.getPosition().x+shadowOffset,  playerTile.getPosition().y+shadowOffset+TILE_SIZE);
+            g2d.drawString(""+player.getIcon(), playerTile.getPosition().x+shadowOffset,  playerTile.getPosition().y+shadowOffset+TILE_SIZE);
 
             g2d.setColor(Color.white);
-            g2d.drawString(player.getIcon(), playerTile.getPosition().x,  playerTile.getPosition().y+TILE_SIZE);
+            g2d.drawString(""+player.getIcon(), playerTile.getPosition().x,  playerTile.getPosition().y+TILE_SIZE);
         }
     }
 
@@ -733,9 +733,13 @@ public class Board extends JPanel {
 
     @Override
     public void paintComponent(Graphics g) {
+        // TODO: Change this to shouldRefreshBackground
         if (!isWinState) {
             super.paintComponent(g);
         }
+
+        // TODO: This function should be in DrawingHandler
+        // TODO: Then, graphicsLoop should call each of the Class's graphicsLoop functions.
         graphicsLoop(g);
     }
 }

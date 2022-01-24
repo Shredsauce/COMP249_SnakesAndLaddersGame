@@ -18,6 +18,10 @@ public class Player {
         this.playerIndex = playerIndex;
     }
 
+    public Player(char jetonOption) {
+
+    }
+
     public Tile getCurrentTile() {
         return currentTile;
     }
@@ -26,8 +30,8 @@ public class Player {
         this.currentTile = tile;
     }
 
-    public String getIcon() {
-        return icon+"";
+    public char getIcon() {
+        return icon;
     }
 
     public int displayedPlayerNumber() {

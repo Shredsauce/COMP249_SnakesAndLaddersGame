@@ -3,8 +3,8 @@
 //
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
-
 public class Tile {
+
     private int tileId;
     private Int2 coordinates;
     private int moveTo;

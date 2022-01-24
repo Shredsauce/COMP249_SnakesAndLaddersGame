@@ -1,0 +1,7 @@
+public enum GameState {
+    NONE,
+    CHOOSE_PLAYERS,
+    CHOOSE_PLAYER_ORDER,
+    BOARD_CREATION_ANIMATION,
+    PLAY,
+}
