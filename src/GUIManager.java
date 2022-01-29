@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Random;
 
+/** Handles the buttons and panels. */
 public class GUIManager extends JComponent {
     public static GUIManager instance;
     public static int WIDTH = 600;
@@ -16,7 +17,6 @@ public class GUIManager extends JComponent {
     public static Int2 OFFSCREEN_DIE_POS = new Int2(-100, -100);
 
     private LadderAndSnake game;
-    private int numPlayersChosen;
     private boolean hasMainMenuBeenInit;
 
     private JFrame frame;
@@ -26,6 +26,7 @@ public class GUIManager extends JComponent {
     private Board board;
     private String textToDisplay = "";
     private boolean isAnimating;
+    private Thread animateShowBoardThread;
 
     private Int2 nextDieMouseRollPos = OFFSCREEN_DIE_POS;
     private Int2 previousMousePos = new Int2(0, 0);
@@ -34,6 +35,9 @@ public class GUIManager extends JComponent {
         return instance;
     }
 
+    /** Constructor
+     * @param game The game that will be played.
+     * */
     public GUIManager(LadderAndSnake game) {
         instance = this;
         this.game = game;
@@ -49,10 +53,7 @@ public class GUIManager extends JComponent {
         setDisplayText(welcomeText);
     }
 
-    public JFrame getFrame() {
-        return frame;
-    }
-
+    /** Close the game and display a goodbye messge. */
     private void closeWindow() {
         if (frame != null) {
             frame.setVisible(false);
@@ -62,6 +63,7 @@ public class GUIManager extends JComponent {
         System.out.println("Thanks for playing, goodbye");
     }
 
+    /** Called after GUI changes are made. */
     public void updateDisplay() {
         tryInitMainMenu();
         clearPanels();
@@ -74,21 +76,25 @@ public class GUIManager extends JComponent {
             case NONE:
                 break;
             case CHOOSE_PLAYERS:
-                displayPossiblePlayerButtons(game);
-                tryDisplayStartButton();
+                displayPossiblePlayerButtons(game.getJetonOptions());
+
+                if (game.getPlayers().length >= game.getMinPlayerCount()) {
+                    displayStartButton();
+                }
+
                 break;
             case MAIN_MENU:
-                tryDisplayStartButton();
+                displayStartButton();
                 displayToggleGameTypeButton();
                 displayExitButton();
                 break;
             case CHOOSE_PLAYER_ORDER:
-                board = createBoard(game.getBoardSettings());
+                board = new Board(game);
                 mainContainer.add(DrawingManager.getInstance(), BorderLayout.CENTER);
                 displayCancelButton();
                 break;
             case PLAY:
-                board = createBoard(game.getBoardSettings());
+                board = new Board(game);
                 board.setPlayers(game.getPlayers());
                 animateShowBoard();
                 mainContainer.add(DrawingManager.getInstance(), BorderLayout.CENTER);
@@ -103,6 +109,7 @@ public class GUIManager extends JComponent {
         frame.repaint();
     }
 
+    /** Creates that main menu items only if they have not yet been created. */
     private void tryInitMainMenu() {
         if (!hasMainMenuBeenInit) {
             headerPanel = new JPanel();
@@ -115,6 +122,7 @@ public class GUIManager extends JComponent {
         }
     }
 
+    /** Clears any existing panels so that they can be recreated. */
     private void clearPanels() {
         // Remove existing buttons from the panels.
         Component[] components = mainContainer.getComponents();
@@ -132,18 +140,24 @@ public class GUIManager extends JComponent {
         }
     }
 
-    private void displayPossiblePlayerButtons(LadderAndSnake game) {
-        for (String jetonOption : game.getJetonOptions()) {
+    /** Displays the remaining player buttons that have not yet been chosen.
+     * @param jetonOptions All possible icon options.
+     * */
+    private void displayPossiblePlayerButtons(String[] jetonOptions) {
+        for (String jetonOption : jetonOptions) {
             if (isJetonChosenByPlayer(jetonOption)) {
                 continue;
             }
  
             JButton choosePlayerBtn = new JButton(""+jetonOption);
-            choosePlayerBtn.addActionListener(event -> onPlayerSelected(jetonOption));
+            choosePlayerBtn.addActionListener(event -> onPlayerOptionSelected(jetonOption));
             headerPanel.add(choosePlayerBtn);
         }
     }
 
+    /** @return True if an icon option has already been chosen by another player.
+     * @param jeton The icon option to check.
+     * */
     private boolean isJetonChosenByPlayer(String jeton) {
         for (String jetonOption : game.getJetonOptions()) {
             for (Player player : game.getPlayers()) {
@@ -156,10 +170,13 @@ public class GUIManager extends JComponent {
         return false;
     }
 
-    private void onPlayerSelected(String jetonOption) {
+    /** Called after a player option has been selected.
+     * @param jetonOption The icon option that was selected.
+     * */
+    private void onPlayerOptionSelected(String jetonOption) {
         System.out.println("Display button selected. Number of players so far: " + game.getPlayers().length);
 
-        Player newPlayer = new Player(numPlayersChosen++, jetonOption);
+        Player newPlayer = new Player(jetonOption);
         game.addPlayer(newPlayer);
         setDisplayText(newPlayer.getIcon() + " wants to play!");
 
@@ -170,14 +187,14 @@ public class GUIManager extends JComponent {
         }
     }
 
-    private void tryDisplayStartButton() {
-        if (game.getPlayers().length < game.getMinPlayerCount()) return;
-
+    /** Displays the start button*/
+    private void displayStartButton() {
         JButton startGameBtn = new JButton("Start game");
         startGameBtn.addActionListener(event -> tryStartGame());
         headerPanel.add(startGameBtn);
     }
 
+    /** Displays the toggle game type button. This is used to toggle between default and random game mode. */
     private void displayToggleGameTypeButton() {
         String gameTypeText = game.getIsDefaultGameType() ? "Default game" : "Random game";
         JButton toggleGameTypeBtn = new JButton(gameTypeText);
@@ -186,6 +203,7 @@ public class GUIManager extends JComponent {
         headerPanel.add(toggleGameTypeBtn);
     }
 
+    /** Displays the exist game button. */
     private void displayExitButton() {
         JButton exitGameBtn = new JButton("Exit game");
 
@@ -193,11 +211,13 @@ public class GUIManager extends JComponent {
         headerPanel.add(exitGameBtn);
     }
 
+    /** Toggle the game type between default and random mode. */
     private void toggleGameType() {
         game.toggleGameType();
         updateDisplay();
     }
 
+    /** Display the label at the top of the game. */
     private void displayTextArea() {
         JTextArea textArea = new JTextArea();
         textArea.append(textToDisplay);
@@ -207,6 +227,7 @@ public class GUIManager extends JComponent {
         textDisplayPanel.add(textArea);
     }
 
+    /** Remove the previous text displays so that the new one may be displayed. */
     private void removePreviousTextDisplays() {
         Component[] textAreaComponents = textDisplayPanel.getComponents();
         for (Component textAreaComponent : textAreaComponents) {
@@ -214,6 +235,7 @@ public class GUIManager extends JComponent {
         }
     }
 
+    /** @param text The text that will be displayed at the top of the game. */
     public void setDisplayText(String text) {
         System.out.println(text);
         textToDisplay = text;
@@ -222,9 +244,9 @@ public class GUIManager extends JComponent {
         frame.repaint();
     }
 
+    /** Start the game only if the player order has been determined. */
     private void tryStartGame() {
         if (game.hasDeterminedPlayerOrder()) {
-
             game.setGameState(GameState.PLAY);
         } else {
             game.getCurrentPlayer();
@@ -237,6 +259,7 @@ public class GUIManager extends JComponent {
         updateDisplay();
     }
 
+    /** Display the cancel button. */
     private void displayCancelButton() {
         JButton cancelGameBtn = new JButton("Cancel game");
 
@@ -244,6 +267,7 @@ public class GUIManager extends JComponent {
         headerPanel.add(cancelGameBtn);
     }
 
+    /** Display the button the simulate the current player winning button. I have a really cool animation that happens when a player wins but the default snakes and ladders board takes forever for a winner to be chosen. */
     private void displaySimulateCurrentPlayerWinButton() {
         JButton simulateWinBtn = new JButton("Simulate current player win");
 
@@ -251,18 +275,23 @@ public class GUIManager extends JComponent {
         headerPanel.add(simulateWinBtn);
     }
 
+    /** Simulate the current player winning. */
     private void onSimulateWin() {
         Player currentPlayer = game.getCurrentPlayer();
         currentPlayer.setCurrentTile(board.getLastTile());
         validateWin(currentPlayer);
     }
 
+    /** Quit to the main menu and reset the text display. */
     private void onQuitToMainMenu() {
         game.setGameState(GameState.MAIN_MENU);
         setDisplayText("");
         updateDisplay();
     }
 
+    /** Called after a player has won.
+     * @param player The player who won.
+     * */
     private void onWin(Player player) {
         setDisplayText(player.toString() + " wins!");
         setIsAnimating(true, "Start win animation");
@@ -289,6 +318,10 @@ public class GUIManager extends JComponent {
         thread.start();
     }
 
+    /** Move a player on the board.
+     * @param player The player to move.
+     * @param dieValue The dice value that the player rolled.
+     * */
     public void movePlayer(Player player, int dieValue) {
         int newTileId = player.getCurrentTile().getTileId() + dieValue;
 
@@ -306,12 +339,19 @@ public class GUIManager extends JComponent {
         thread.start();
     }
 
+    /** Check if a player has won and call the win function if that is the case.
+     * @param player The player whose win state should be validated.
+     * */
     private void validateWin(Player player) {
         if (player.getCurrentTile().getTileId() == board.getLastTile().getTileId()) {
             onWin(player);
         }
     }
 
+    /** Moves a player to a specified tile.
+     * @param player The player to move.
+     * @param newTileId The id of the new tile to move to.
+     * */
     private void movePlayerToTile(Player player, int newTileId) {
         Tile currentTile = player.getCurrentTile();
 
@@ -349,6 +389,9 @@ public class GUIManager extends JComponent {
         }
     }
 
+    /** Roll dice. Calls onRollDieAnimComplete after the animation has completed.
+     * @param diceRollAction What should happen after the dice has completed rolling.
+     * */
     public void rollDie(DiceRollMode diceRollAction) {
         Thread thread = new Thread(() -> {
             setIsAnimating(true, "Start roll die");
@@ -360,6 +403,10 @@ public class GUIManager extends JComponent {
         thread.start();
     }
 
+    /** Called after the dice animation has completed.
+     * @param dieValue The value of the rolled dice.
+     * @param diceRollAction What to do after the dice has completed rolling.
+     * */
     private void onRollDieAnimComplete(int dieValue, DiceRollMode diceRollAction) {
         if (game.getGameState() == GameState.MAIN_MENU) return;
 
@@ -386,6 +433,7 @@ public class GUIManager extends JComponent {
         }
     }
 
+    /** Sets the parameters needed for the dice rolling animation. */
     private int animateDie() {
         int actualRoll = game.flipDice();
 
@@ -412,8 +460,7 @@ public class GUIManager extends JComponent {
         return actualRoll;
     }
 
-    private Thread animateShowBoardThread;
-
+    /** Sets the parameters for the snake animation that plays when the board is first shown. */
     private void animateShowBoard() {
         if (animateShowBoardThread != null) {
             // Using Thread.stop even though it is deprecated because it's the easiest way to stop the currently running thread
@@ -441,33 +488,39 @@ public class GUIManager extends JComponent {
         animateShowBoardThread.start();
     }
 
-    public Board createBoard(BoardSettings boardSettings) {
-        board = new Board(game, boardSettings);
-        return board;
-    }
-
-    private void setIsAnimating(boolean isAnimating) {
-        setIsAnimating(isAnimating, "");
-    }
-
+    /** Set the animating state of the GUI. This is a private setter used for debugging purposes.
+     * @param isAnimating Is the GUI currently animating.
+     * @param context The context used for debugging.
+     * */
     private void setIsAnimating(boolean isAnimating, String context) {
+        // Uncommented to debug
 //        System.out.println("Set is animating: " + isAnimating + " -- context: " + context);
         this.isAnimating = isAnimating;
     }
 
+    /** @return True if the GUI is currently animating. */
     public boolean isInAnimation() {
         return isAnimating;
     }
 
+    /** Set the position of the dice.
+     * @param pos The position of the dice. */
     public void setDieRollPos(Int2 pos) {
         this.nextDieMouseRollPos = pos;
     }
 
-
+    /** The next dice position based on the mouse position. */
     public Int2 getNextDieMouseRollPos() {
         return nextDieMouseRollPos;
     }
 
+    /** @return The main JFrame. */
+    public JFrame getFrame() {
+        return frame;
+    }
+
+    /** Called after the mouse is released.
+     * @param mouseEvent The Mouse event. */
     public void onMouseReleased(MouseEvent mouseEvent) {
         if (!isInAnimation() && board != null) {
             nextDieMouseRollPos = new Int2(mouseEvent.getX(), mouseEvent.getY());
@@ -475,6 +528,8 @@ public class GUIManager extends JComponent {
         }
     }
 
+    /** Called while the mouse is being dragged.
+     * @param mouseEvent The Mouse event.*/
     public void onMouseDragged(MouseEvent mouseEvent) {
         if (!GUIManager.getInstance().isInAnimation()) {
             nextDieMouseRollPos = new Int2(mouseEvent.getX(), mouseEvent.getY());

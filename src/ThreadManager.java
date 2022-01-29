@@ -4,11 +4,13 @@
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
 
+/** Used for managing the threads. This is only really used for calling threadSleep. */
 public class ThreadManager {
-    // Singleton
+    /** Singleton instance */
     private static ThreadManager instance;
+
+    /** @return The ThreadManager singleton. Lazy loaded. */
     public static ThreadManager getInstance() {
-        // Lazy load
         if (instance == null) {
             instance = new ThreadManager();
         }
@@ -16,17 +18,13 @@ public class ThreadManager {
         return instance;
     }
 
+    /** Put the thread to sleep for specified milliseconds.
+    * @param millis The number of milliseconds to put the thread to sleep for. */
     public void threadSleep(long millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    public Thread createThread(Runnable target) {
-        Thread thread = new Thread(target);
-
-        return thread;
     }
 }

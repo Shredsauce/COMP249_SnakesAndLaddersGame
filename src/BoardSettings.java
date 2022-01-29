@@ -6,6 +6,7 @@
 
 import java.util.Hashtable;
 
+/** Settings that the created board should use. These include the randomization parameters. */
 public class BoardSettings {
     public Int2 boardSize = new Int2(10, 10);
     public boolean useDefault = true;

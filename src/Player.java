@@ -6,66 +6,58 @@
 
 import java.util.Hashtable;
 
+/** Represents a player that is playing the snakes and ladders game. */
 public class Player {
-
     private Tile currentTile;
     private String icon;
-    private int playerIndex;
     private boolean orderRollComplete;
 
-    public Player(int playerIndex, String icon) {
+    /** Player constructor
+     * @param icon The icon that the player will use.
+     * */
+    public Player(String icon) {
         this.icon = icon;
-        this.playerIndex = playerIndex;
     }
 
+    /** Get the current tile that the player is on. */
     public Tile getCurrentTile() {
         return currentTile;
     }
 
+    /** Set the player to the tile.
+     * @param tile Tile that the player should be set to. */
     public void setCurrentTile(Tile tile) {
         this.currentTile = tile;
     }
 
+    /** @return The icon uses by the player. */
     public String getIcon() {
         return icon;
     }
 
-    public int displayedPlayerNumber() {
-        return playerIndex + 1;
-    }
-
-    public boolean hasUniqueRoll(Hashtable<Player, Integer> playerRolls) {
-        int thisPlayerRoll = playerRolls.get(this);
-
-        for(Player player : playerRolls.keySet()) {
-            if (player != this && playerRolls.get(this) == thisPlayerRoll) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
+    /** @return The name of the player which includes their icon. */
     public String toString() {
         return "Player "+icon;
     }
 
-    public boolean hasCompletedOrderRoll() {
-        return orderRollComplete;
-    }
-
-    public void setOrderRollComplete(boolean complete) {
-        orderRollComplete = complete;
-    }
-
+    /** @return A formatted list of players used for the order determination message.
+     * @param players The players that will be put into a formatted list.
+     * */
     public static String getPlayerOrderAsText(Player[] players) {
         return getPlayersAsText(players, "then");
     }
 
+    /** @return A formatted list of players
+     * @param players The players that will be put into a formatted list.
+     * */
     public static String getPlayerListAsText(Player[] players) {
         return getPlayersAsText(players, "and");
     }
 
+    /** @return A formatted list of players.
+     * @param players The players that will be put into a formatted list.
+     * @param lastJoiningWord The last word that will be used to join the player list. (Example: If the last joining word is "and", the player list will go "player1, player2 and player3")
+     * */
     private static String getPlayersAsText(Player[] players, String lastJoiningWord) {
         String text = "";
         for (int i = 0; i < players.length; i++) {

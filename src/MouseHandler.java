@@ -9,8 +9,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 
+/** This class is used for handling the mouse events. This was used as inspiration: ttp://www.ssaurel.com/blog/learn-how-to-make-a-swing-painting-and-drawing-application/*/
 public class MouseHandler extends JComponent {
-    // Mouse related stuff inspired by this: http://www.ssaurel.com/blog/learn-how-to-make-a-swing-painting-and-drawing-application/
+    /** Constructor that adds the release and drag listeners. */
     public MouseHandler() {
         addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent mouseEvent) {

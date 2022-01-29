@@ -6,7 +6,7 @@
 
 import java.util.*;
 
-/*** * Representation of the snakes and ladders board */
+/** Representation of the snakes and ladders board */
 public class Board {
     private BoardSettings boardSettings;
 
@@ -71,10 +71,10 @@ public class Board {
         return boardSize.x * boardSize.y;
     }
 
-    public Board(LadderAndSnake game, BoardSettings boardSettings) {
+    public Board(LadderAndSnake game) {
+        this.boardSettings = game.getBoardSettings();
         this.boardSize = boardSettings.boardSize;
         this.game = game;
-        this.boardSettings = boardSettings;
 
         DrawingManager.getInstance().setBoard(this);
 

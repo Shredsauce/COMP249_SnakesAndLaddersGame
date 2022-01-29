@@ -9,6 +9,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+/** Handles the drawing for the board and the die. */
 public class DrawingManager extends JPanel {
     public static int TILE_SIZE = 30;
     public static int TILE_HALF_SIZE = TILE_SIZE/2;
