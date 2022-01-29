@@ -1,3 +1,9 @@
+// -----------------------------------------------------
+// Assignment 1
+//
+// Written by: Malcolm Arcand Laliberé - 26334792
+// -----------------------------------------------------
+
 public class ThreadManager {
     // Singleton
     private static ThreadManager instance;
@@ -10,7 +16,7 @@ public class ThreadManager {
         return instance;
     }
 
-    public static void threadSleep(long millis) {
+    public void threadSleep(long millis) {
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
@@ -18,7 +24,7 @@ public class ThreadManager {
         }
     }
 
-    public static Thread createThread(Runnable target) {
+    public Thread createThread(Runnable target) {
         Thread thread = new Thread(target);
 
         return thread;

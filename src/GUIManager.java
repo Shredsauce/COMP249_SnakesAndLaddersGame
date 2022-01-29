@@ -349,7 +349,6 @@ public class GUIManager extends JComponent {
         }
     }
 
-    // TODO: Make sure the die cannot be rolled while it's being animated
     public void rollDie(DiceRollMode diceRollAction) {
         Thread thread = new Thread(() -> {
             setIsAnimating(true, "Start roll die");

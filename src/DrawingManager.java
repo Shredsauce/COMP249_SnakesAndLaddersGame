@@ -1,3 +1,9 @@
+// -----------------------------------------------------
+// Assignment 1
+//
+// Written by: Malcolm Arcand Laliberé - 26334792
+// -----------------------------------------------------
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
@@ -10,8 +16,6 @@ public class DrawingManager extends JPanel {
     public static int NUM_TAIL_TILES = 1;
     public static Int2 OFFSET = new Int2(100, 100);
 
-    private String textToDisplay;
-    private JFrame frame;
     private Board board;
 
     private boolean shouldRefreshBackground = true;
@@ -31,8 +35,6 @@ public class DrawingManager extends JPanel {
 
     public DrawingManager (JFrame frame) {
         instance = this;
-        this.frame = frame;
-
         frame.getContentPane().add(this, BorderLayout.CENTER);
     }
 
@@ -136,7 +138,6 @@ public class DrawingManager extends JPanel {
     }
 
     private void drawTileNumber(Graphics2D g2d, int tileId, int xPos, int yPos) {
-        // TODO: Try to figure this out programmatically
         int boardNumberYOffset = 20;
         g2d.setColor(Color.white);
         g2d.drawString(""+tileId, xPos, yPos + TILE_SIZE - boardNumberYOffset);
