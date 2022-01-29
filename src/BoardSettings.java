@@ -13,6 +13,11 @@ public class BoardSettings {
     public float forwardChance = 1f;
     public double chanceOfHavingMoveTo = 0.4;
 
+    // Ladder visual settings
+    public float ladderThickness = 3f;
+    public int ladderWidth = 20;
+    public int rungSpacing = 8;
+
     private Hashtable<Integer, Integer> defaultMoveToConfig = new Hashtable<Integer, Integer>() {
         {put(1, 38);}
         {put(4, 14);}

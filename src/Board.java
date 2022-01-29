@@ -20,10 +20,11 @@ public class Board extends JPanel {
     public static int TILE_SPACING = 5;
     public static int NUM_TAIL_TILES = 1;
     public static Int2 OFFSET = new Int2(100, 100);
+    private BoardSettings boardSettings;
 
     private LadderAndSnake game;
     private Player[] players;
-    private boolean isWinState;
+    private boolean shouldRefreshBackground = true;
 
     // Board
     private Int2 boardSize = new Int2(10, 10);
@@ -93,6 +94,7 @@ public class Board extends JPanel {
     public Board(LadderAndSnake game, BoardSettings boardSettings) {
         this.boardSize = boardSettings.boardSize;
         this.game = game;
+        this.boardSettings = boardSettings;
 
         if (boardSettings.useDefault) {
             boardSettings.horizontalChance = 1f;
@@ -173,13 +175,9 @@ public class Board extends JPanel {
             return boardSettings.getDefaultMoveToConfig();
         }
 
-        // TODO: Make sure the value of an entry is not the key of another entry
-        // TODO: Option to randomly generate this. make sure elements are never on the same row
-        // TODO: Randomly generate move to config
-
         Hashtable<Integer, Integer> generatedMoveToConfig = new Hashtable<Integer, Integer>();
 
-        for (int i = 1; i < lastTile.getTileId(); i++) {
+        for (int i = 1; i < lastTile.getTileId() - 1; i++) {
             Random random = new Random();
             double moveToRandomResult = random.nextDouble(0.0, 1.0);
 
@@ -296,15 +294,15 @@ public class Board extends JPanel {
         Graphics2D g2d = (Graphics2D) g;
         g2d.drawString("Snakes and ladders", 20, 20);
 
-        if (!isWinState){
+        if (shouldRefreshBackground){
             drawBoard(g2d, endTileIdForAnim);
         }
 
-        if (boardShowAnimComplete && !isWinState){
+        if (boardShowAnimComplete && shouldRefreshBackground){
             drawMoveToElements(g2d);
         }
 
-        if (players != null && players.length > 0 && !isWinState) {
+        if (players != null && players.length > 0 && shouldRefreshBackground) {
             drawPlayers(g2d);
         }
 
@@ -434,7 +432,7 @@ public class Board extends JPanel {
         if (shouldDrawSnakeHead(tileId, nextTile)) {
             drawBoardHead(g2d, tile, previousTile);
         } else if (shouldDrawSnakeTail(tileId)) {
-            drawBoardTail(g2d, tile, previousTile);
+            drawBoardTail(g2d, tile, nextTile);
         } else {
             Int2 tileCoord = tile.getCoordinates();
             Int2 prevCoord = previousTile.getCoordinates();
@@ -491,7 +489,6 @@ public class Board extends JPanel {
         int headLength = (int)(1.5*TILE_HALF_SIZE);
         int headWidth = TILE_HALF_SIZE;
 
-        // TODO: Put this as a global variable somewhere
         double time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
 
         Color headColor = g2d.getColor();
@@ -528,20 +525,18 @@ public class Board extends JPanel {
         g2d.rotate(-headAngle, cellCenter.x, cellCenter.y);
     }
 
-    private void drawBoardTail(Graphics2D g2d, Tile tile, Tile previousTile) {
+    private void drawBoardTail(Graphics2D g2d, Tile tile, Tile nextTile) {
         Int2 pos = tile.getPosition();
-//
-//        int tileId = tile.getTileId();
-//
-//        int offset = NUM_TAIL_TILES - tileId;
-//
-        // TODO: Make tail longer (more than 1 cell)
-        // TODO: Rotate tail correctly
+        Int2 cellCenter = new Int2(pos.x +  TILE_HALF_SIZE, pos.y + TILE_HALF_SIZE);
+
+        double tailRotationAngle = getSnakeTailAngle(tile.getCoordinates(), nextTile.getCoordinates());
         Polygon poly = new Polygon();
+        g2d.rotate(tailRotationAngle, cellCenter.x, cellCenter.y);
         poly.addPoint(pos.x, pos.y+TILE_HALF_SIZE);
         poly.addPoint(pos.x+TILE_SIZE, pos.y+TILE_SPACING);
         poly.addPoint(pos.x+TILE_SIZE, pos.y+TILE_SIZE-TILE_SPACING);
         g2d.fillPolygon(poly);
+        g2d.rotate(-tailRotationAngle, cellCenter.x, cellCenter.y);
     }
 
     private double getSnakeHeadAngle(Int2 pos, Int2 previousPos) {
@@ -559,6 +554,15 @@ public class Board extends JPanel {
         if ((prevDir.x < 0 && nextDir.y > 0) || (nextDir.x < 0 && prevDir.y > 0)) return (3*Math.PI)/2;
         if ((prevDir.x > 0 && nextDir.y < 0) || (nextDir.x > 0 && prevDir.y < 0)) return Math.PI/2;
         if ((prevDir.x > 0 && nextDir.y > 0) || (nextDir.x > 0 && prevDir.y > 0)) return Math.PI;
+
+        return 0;
+    }
+
+    private double getSnakeTailAngle(Int2 tailTileCoord, Int2 nextTileCoord) {
+        if (nextTileCoord.x > tailTileCoord.x) return 0;
+        if (nextTileCoord.x < tailTileCoord.x) return Math.PI;
+        if (nextTileCoord.y > tailTileCoord.y)  return Math.PI/2;
+        if (nextTileCoord.y < tailTileCoord.y) return (3*Math.PI)/2;
 
         return 0;
     }
@@ -592,11 +596,11 @@ public class Board extends JPanel {
     }
 
     private void drawLadder(Graphics2D g2d, int startTileId, int endTileId) {
-        // TODO: Put these vars somewhere better. Also make ends stick out a bit (maybe use two lines instead of a rectangle). Also give the ladders some weight and color
-        float ladderThickness = 3f;
-        int ladderWidth = 20;
+        float ladderThickness = boardSettings.ladderThickness;
+        int ladderWidth = boardSettings.ladderWidth;
+        int rungSpacing = boardSettings.rungSpacing;
+
         int ladderPosYOffset = TILE_SIZE/3;
-        int rungSpacing = 8;
 
         Tile startTile = getTile(startTileId);
         Tile endTile = getTile(endTileId);
@@ -690,8 +694,8 @@ public class Board extends JPanel {
         currentDieValue = dieValue;
     }
 
-    public void setWinState(boolean isWinState) {
-        this.isWinState = isWinState;
+    public void setShouldRefreshBackground(boolean shouldRefreshBackground) {
+        this.shouldRefreshBackground = shouldRefreshBackground;
     }
 
     public void setDieRollPos(Int2 pos) {
@@ -700,13 +704,10 @@ public class Board extends JPanel {
 
     @Override
     public void paintComponent(Graphics g) {
-        // TODO: Change this to shouldRefreshBackground
-        if (!isWinState) {
+        if (shouldRefreshBackground) {
             super.paintComponent(g);
         }
 
-        // TODO: This function should be in DrawingHandler
-        // TODO: Then, graphicsLoop should call each of the Class's graphicsLoop functions.
         graphicsLoop(g);
     }
 }

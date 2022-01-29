@@ -19,8 +19,7 @@ public class GUIManager extends JComponent {
 
     private JFrame frame;
     private Container mainContainer;
-    private JPanel choosePlayersPanel;
-    private JPanel footerPanel;
+    private JPanel headerPanel;
     private JPanel textDisplayPanel;
     private Container startBtnContainer;
     private Board board;
@@ -60,8 +59,7 @@ public class GUIManager extends JComponent {
         tryInitMainMenu();
         clearPanels();
 
-        mainContainer.add(choosePlayersPanel, BorderLayout.NORTH);
-        mainContainer.add(footerPanel, BorderLayout.WEST);
+        mainContainer.add(headerPanel, BorderLayout.NORTH);
         mainContainer.add(textDisplayPanel, BorderLayout.SOUTH);
 
         switch(game.getGameState()) {
@@ -69,6 +67,8 @@ public class GUIManager extends JComponent {
                 break;
             case CHOOSE_PLAYERS:
                 displayPossiblePlayerButtons(game);
+                tryDisplayStartButton();
+                break;
             case MAIN_MENU:
                 tryDisplayStartButton();
                 displayToggleGameTypeButton();
@@ -77,16 +77,15 @@ public class GUIManager extends JComponent {
             case CHOOSE_PLAYER_ORDER:
                 board = createBoard(game.getBoardSettings());
                 mainContainer.add(board, BorderLayout.CENTER);
-                tryDisplayCancelButton();
-                break;
-            case BOARD_CREATION_ANIMATION:
+                displayCancelButton();
                 break;
             case PLAY:
                 board = createBoard(game.getBoardSettings());
                 board.setPlayers(game.getPlayers());
                 animateShowBoard();
                 mainContainer.add(board, BorderLayout.CENTER);
-                tryDisplayCancelButton();
+                displayCancelButton();
+                displaySimulateCurrentPlayerWinButton();
                 break;
         }
 
@@ -98,8 +97,7 @@ public class GUIManager extends JComponent {
 
     private void tryInitMainMenu() {
         if (!hasMainMenuBeenInit) {
-            choosePlayersPanel = new JPanel();
-            footerPanel = new JPanel();
+            headerPanel = new JPanel();
             textDisplayPanel = new JPanel();
 
             mainContainer = frame.getContentPane();
@@ -134,7 +132,7 @@ public class GUIManager extends JComponent {
  
             JButton choosePlayerBtn = new JButton(""+jetonOption);
             choosePlayerBtn.addActionListener(event -> onPlayerSelected(jetonOption));
-            choosePlayersPanel.add(choosePlayerBtn);
+            headerPanel.add(choosePlayerBtn);
         }
     }
 
@@ -169,7 +167,7 @@ public class GUIManager extends JComponent {
 
         JButton startGameBtn = new JButton("Start game");
         startGameBtn.addActionListener(event -> tryStartGame());
-        footerPanel.add(startGameBtn);
+        headerPanel.add(startGameBtn);
     }
 
     private void displayToggleGameTypeButton() {
@@ -177,14 +175,14 @@ public class GUIManager extends JComponent {
         JButton toggleGameTypeBtn = new JButton(gameTypeText);
 
         toggleGameTypeBtn.addActionListener(event -> toggleGameType());
-        footerPanel.add(toggleGameTypeBtn);
+        headerPanel.add(toggleGameTypeBtn);
     }
 
     private void displayExitButton() {
         JButton exitGameBtn = new JButton("Exit game");
 
         exitGameBtn.addActionListener(event -> closeWindow());
-        footerPanel.add(exitGameBtn);
+        headerPanel.add(exitGameBtn);
     }
 
     private void toggleGameType() {
@@ -219,8 +217,6 @@ public class GUIManager extends JComponent {
     private void tryStartGame() {
         if (game.hasDeterminedPlayerOrder()) {
 
-//            ThreadManager.getInstance().threadSleep(3000);
-
             game.setGameState(GameState.PLAY);
         } else {
             game.getCurrentPlayer();
@@ -233,26 +229,39 @@ public class GUIManager extends JComponent {
         updateDisplay();
     }
 
-    private void tryDisplayCancelButton() {
+    private void displayCancelButton() {
         JButton cancelGameBtn = new JButton("Cancel game");
-        footerPanel.add(cancelGameBtn);
 
-        cancelGameBtn.addActionListener(event -> onCancelGame());
-        footerPanel.add(cancelGameBtn);
+        cancelGameBtn.addActionListener(event -> onQuitToMainMenu());
+        headerPanel.add(cancelGameBtn);
     }
 
-    private void onCancelGame() {
+    private void displaySimulateCurrentPlayerWinButton() {
+        JButton simulateWinBtn = new JButton("Simulate current player win");
+
+        simulateWinBtn.addActionListener(event -> onSimulateWin());
+        headerPanel.add(simulateWinBtn);
+    }
+
+    private void onSimulateWin() {
+        Player currentPlayer = game.getCurrentPlayer();
+        currentPlayer.setCurrentTile(board.getLastTile());
+        validateWin(currentPlayer);
+    }
+
+    private void onQuitToMainMenu() {
         game.setGameState(GameState.MAIN_MENU);
         updateDisplay();
     }
 
     private void onWin(Player player) {
         setDisplayText(player.toString() + " wins!");
+        setIsAnimating(true, "Start win animation");
+
+        int numWinningDice = 400;
 
         Thread thread = new Thread(() -> {
-            board.setWinState(true);
-            // TODO: Put as variable somewhere
-            int numWinningDice = 400;
+            board.setShouldRefreshBackground(false);
             for (int i = 0; i < numWinningDice; i++) {
                 Random random = new Random();
                 Int2 pos = new Int2(random.nextInt(0, WIDTH), random.nextInt(0, HEIGHT));
@@ -260,12 +269,13 @@ public class GUIManager extends JComponent {
 
                 rollDie(DiceRollMode.WIN_STATE);
 
-                // TODO: Put as variable somewhere
                 ThreadManager.getInstance().threadSleep(5);
             }
 
             board.setDieRollPos(Board.OFFSCREEN_DIE_POS);
-            board.setWinState(false);
+            board.setShouldRefreshBackground(true);
+            setIsAnimating(false, "Start win animation");
+            onQuitToMainMenu();
         });
         thread.start();
     }
@@ -288,12 +298,16 @@ public class GUIManager extends JComponent {
 
                 isPlayingMoveAnim = false;
 
-                if (player.getCurrentTile().getTileId() == board.getLastTile().getTileId()) {
-                    onWin(player);
-                }
+                validateWin(player);
             }
         });
         thread.start();
+    }
+
+    private void validateWin(Player player) {
+        if (player.getCurrentTile().getTileId() == board.getLastTile().getTileId()) {
+            onWin(player);
+        }
     }
 
     private void movePlayerToTile(Player player, int newTileId) {
@@ -335,8 +349,6 @@ public class GUIManager extends JComponent {
 
     // TODO: Make sure the die cannot be rolled while it's being animated
     public void rollDie(DiceRollMode diceRollAction) {
-        if (isAnimating) return;
-        
         Thread thread = new Thread(() -> {
             setIsAnimating(true, "Start roll die");
             int dieValue = animateDie();
