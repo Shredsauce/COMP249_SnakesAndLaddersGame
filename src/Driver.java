@@ -10,10 +10,6 @@ public class Driver {
         LadderAndSnake game = new LadderAndSnake();
         GUIManager guiManager = new GUIManager(game);
         DrawingManager drawingManager = new DrawingManager(guiManager.getFrame());
-
-        String welcomeText = "Welcome to snakes and ladders.";
-        welcomeText += " This is a " + game.getMinPlayerCount() + "-" + game.getMaxPlayerCount() + " player game.";
-        GUIManager.getInstance().setDisplayText(welcomeText);
     }
 }
 

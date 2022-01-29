@@ -43,6 +43,10 @@ public class GUIManager extends JComponent {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         updateDisplay();
+
+        String welcomeText = "Welcome to snakes and ladders.";
+        welcomeText += " This is a " + game.getMinPlayerCount() + "-" + game.getMaxPlayerCount() + " player game. Please select the players from the options below.";
+        setDisplayText(welcomeText);
     }
 
     public JFrame getFrame() {
@@ -129,7 +133,7 @@ public class GUIManager extends JComponent {
     }
 
     private void displayPossiblePlayerButtons(LadderAndSnake game) {
-        for (char jetonOption : game.getJetonOptions()) {
+        for (String jetonOption : game.getJetonOptions()) {
             if (isJetonChosenByPlayer(jetonOption)) {
                 continue;
             }
@@ -140,8 +144,8 @@ public class GUIManager extends JComponent {
         }
     }
 
-    private boolean isJetonChosenByPlayer(char jeton) {
-        for (char jetonOption : game.getJetonOptions()) {
+    private boolean isJetonChosenByPlayer(String jeton) {
+        for (String jetonOption : game.getJetonOptions()) {
             for (Player player : game.getPlayers()) {
                 if (player.getIcon() == jeton) {
                     return true;
@@ -152,7 +156,7 @@ public class GUIManager extends JComponent {
         return false;
     }
 
-    private void onPlayerSelected(char jetonOption) {
+    private void onPlayerSelected(String jetonOption) {
         System.out.println("Display button selected. Number of players so far: " + game.getPlayers().length);
 
         Player newPlayer = new Player(numPlayersChosen++, jetonOption);
@@ -255,6 +259,7 @@ public class GUIManager extends JComponent {
 
     private void onQuitToMainMenu() {
         game.setGameState(GameState.MAIN_MENU);
+        setDisplayText("");
         updateDisplay();
     }
 
@@ -287,21 +292,14 @@ public class GUIManager extends JComponent {
     public void movePlayer(Player player, int dieValue) {
         int newTileId = player.getCurrentTile().getTileId() + dieValue;
 
-        String text = player.toString() + " rolled a " + dieValue;
-
         Thread thread = new Thread(() -> {
             boolean isPlayingMoveAnim = true;
             while (isPlayingMoveAnim) {
                 if (game.getPlayers() == null || game.getPlayers().length == 0) continue;
                 if (player.getCurrentTile() == null) continue;
 
-                // TODO: Put this stuff in a function
                 movePlayerToTile(player, newTileId);
-
-                setDisplayText(text);
-
                 isPlayingMoveAnim = false;
-
                 validateWin(player);
             }
         });
@@ -364,17 +362,24 @@ public class GUIManager extends JComponent {
     }
 
     private void onRollDieAnimComplete(int dieValue, DiceRollMode diceRollAction) {
+        if (game.getGameState() == GameState.MAIN_MENU) return;
+
         switch(diceRollAction) {
             case NONE:
-
                 break;
             case DETERMINE_ORDER:
                 game.onRollToDeterminePlayerOrder(dieValue);
                 break;
             case MOVE:
                 Player currentPlayer = game.getCurrentPlayer();
+                String text = currentPlayer.toString() + " rolled a " + dieValue + ".";
+
                 movePlayer(currentPlayer, dieValue);
                 game.setCurrentPlayer(game.getNextPlayerForMove());
+
+                text += " Your turn to roll the die " + game.getCurrentPlayer().toString();
+                setDisplayText(text);
+
                 break;
             case WIN_STATE:
 
@@ -428,9 +433,11 @@ public class GUIManager extends JComponent {
                 board.setEndTileIdForAnim(currentTile);
             }
 
+            String text = game.getCurrentPlayer().toString() + " roll the die to start";
+            setDisplayText(text);
+
             board.setBoardAnimComplete();
             setIsAnimating(false, "End show board anim");
-
         });
         animateShowBoardThread.start();
     }
@@ -463,7 +470,7 @@ public class GUIManager extends JComponent {
     }
 
     public void onMouseReleased(MouseEvent mouseEvent) {
-        if (!isInAnimation()) {
+        if (!isInAnimation() && board != null) {
             nextDieMouseRollPos = new Int2(mouseEvent.getX(), mouseEvent.getY());
             GUIManager.getInstance().rollDie(game.getDiceRollMode());
         }

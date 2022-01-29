@@ -13,7 +13,8 @@ public class LadderAndSnake {
     Random random = new Random();
     private Player[] players = new Player[0];
 
-    private char[] jetonOptions = {'♟', '⛄', '☠', '☕'};
+    /** Jeton options */
+    private String[] jetonOptions = {"♟", "⛄", "☠", "☕"};
     private int minPlayerCount = 2;
 
     Hashtable<Player, Integer> playerOrderRolls = new Hashtable<Player, Integer>();
@@ -44,7 +45,6 @@ public class LadderAndSnake {
 
             removePlayersFromOrderRollList(tiedPlayers);
         } else {
-
             diceRollMode = DiceRollMode.MOVE;
             players = sortPlayersByRoll(players);
             hasDeterminedPlayerOrder = true;
@@ -213,7 +213,7 @@ public class LadderAndSnake {
         currentPlayer = player;
     }
 
-    public char[] getJetonOptions() {
+    public String[] getJetonOptions() {
         return jetonOptions;
     }
 

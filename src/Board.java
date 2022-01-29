@@ -4,17 +4,10 @@
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
 
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import javax.swing.*;
 
 /*** * Representation of the snakes and ladders board */
 public class Board {
-
     private BoardSettings boardSettings;
 
     private LadderAndSnake game;

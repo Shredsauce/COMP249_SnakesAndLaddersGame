@@ -9,17 +9,13 @@ import java.util.Hashtable;
 public class Player {
 
     private Tile currentTile;
-    private char icon;
+    private String icon;
     private int playerIndex;
     private boolean orderRollComplete;
 
-    public Player(int playerIndex, char icon) {
+    public Player(int playerIndex, String icon) {
         this.icon = icon;
         this.playerIndex = playerIndex;
-    }
-
-    public Player(char jetonOption) {
-
     }
 
     public Tile getCurrentTile() {
@@ -30,7 +26,7 @@ public class Player {
         this.currentTile = tile;
     }
 
-    public char getIcon() {
+    public String getIcon() {
         return icon;
     }
 
