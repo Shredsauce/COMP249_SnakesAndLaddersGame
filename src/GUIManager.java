@@ -47,13 +47,14 @@ public class GUIManager extends JComponent {
         return frame;
     }
 
-//    private void closeWindow() {
-//        if (frame != null) {
-//            frame.setVisible(false);
-//            frame.dispose();
-//        }
-//        hasMainMenuBeenInit = false;
-//    }
+    private void closeWindow() {
+        if (frame != null) {
+            frame.setVisible(false);
+            frame.dispose();
+        }
+
+        System.out.println("Thanks for playing, goodbye");
+    }
 
     public void updateDisplay() {
         tryInitMainMenu();
@@ -70,7 +71,8 @@ public class GUIManager extends JComponent {
                 displayPossiblePlayerButtons(game);
             case MAIN_MENU:
                 tryDisplayStartButton();
-                tryDisplayToggleGameTypeButton();
+                displayToggleGameTypeButton();
+                displayExitButton();
                 break;
             case CHOOSE_PLAYER_ORDER:
                 board = createBoard(game.getBoardSettings());
@@ -164,19 +166,25 @@ public class GUIManager extends JComponent {
 
     private void tryDisplayStartButton() {
         if (game.getPlayers().length < game.getMinPlayerCount()) return;
-//        if (footerPanel.getComponents().length > 0) return;
 
         JButton startGameBtn = new JButton("Start game");
         startGameBtn.addActionListener(event -> tryStartGame());
         footerPanel.add(startGameBtn);
     }
 
-    private void tryDisplayToggleGameTypeButton() {
-        String gameTypeText = game.isDefaultGameType ? "Default game" : "Random game";
+    private void displayToggleGameTypeButton() {
+        String gameTypeText = game.getIsDefaultGameType() ? "Default game" : "Random game";
         JButton toggleGameTypeBtn = new JButton(gameTypeText);
 
         toggleGameTypeBtn.addActionListener(event -> toggleGameType());
         footerPanel.add(toggleGameTypeBtn);
+    }
+
+    private void displayExitButton() {
+        JButton exitGameBtn = new JButton("Exit game");
+
+        exitGameBtn.addActionListener(event -> closeWindow());
+        footerPanel.add(exitGameBtn);
     }
 
     private void toggleGameType() {
@@ -271,54 +279,58 @@ public class GUIManager extends JComponent {
             boolean isPlayingMoveAnim = true;
             while (isPlayingMoveAnim) {
                 if (game.getPlayers() == null || game.getPlayers().length == 0) continue;
+                if (player.getCurrentTile() == null) continue;
 
                 // TODO: Put this stuff in a function
-                Tile currentTile = player.getCurrentTile();
+                movePlayerToTile(player, newTileId);
 
-                if (currentTile == null) continue;
-
-                int lastTileId = board.getLastTile().getTileId();
-                boolean moveForwards = true;
-
-                int numMovesToMake = newTileId - currentTile.getTileId();
-                int numMovesMade = 0;
-
-                while (numMovesMade < numMovesToMake) {
-                    int currentTileId = currentTile.getTileId();
-
-                    if (currentTileId == lastTileId && newTileId != lastTileId) {
-                        moveForwards = false;
-                    }
-
-                    int nextTileId = currentTileId + (moveForwards ? 1 : -1);
-
-                    numMovesMade++;
-
-                    currentTile = board.getTile(nextTileId);
-                    player.setCurrentTile(currentTile);
-
-                    ThreadManager.getInstance().threadSleep(300);
-                }
-
-                // If tile has a move-to (snake or ladder), move the player to move-to's tile
-                if (player.getCurrentTile().hasMoveTo()) {
-                    int moveToTileId = player.getCurrentTile().getMoveToTileId();
-
-                    Tile moveToTile = board.getTile(moveToTileId);
-
-                    player.setCurrentTile(moveToTile);
-                }
                 setDisplayText(text);
 
                 isPlayingMoveAnim = false;
 
-                if (player.getCurrentTile().getTileId() == lastTileId) {
+                if (player.getCurrentTile().getTileId() == board.getLastTile().getTileId()) {
                     onWin(player);
                 }
-
             }
         });
         thread.start();
+    }
+
+    private void movePlayerToTile(Player player, int newTileId) {
+        Tile currentTile = player.getCurrentTile();
+
+        int lastTileId = board.getLastTile().getTileId();
+        boolean moveForwards = true;
+
+        int numMovesToMake = newTileId - currentTile.getTileId();
+        int numMovesMade = 0;
+
+        while (numMovesMade < numMovesToMake) {
+            int currentTileId = currentTile.getTileId();
+
+            if (currentTileId == lastTileId && newTileId != lastTileId) {
+                moveForwards = false;
+            }
+
+            int nextTileId = currentTileId + (moveForwards ? 1 : -1);
+
+            numMovesMade++;
+
+            currentTile = board.getTile(nextTileId);
+            player.setCurrentTile(currentTile);
+
+            ThreadManager.getInstance().threadSleep(300);
+        }
+
+        // If tile has a move-to (snake or ladder), move the player to move-to's tile
+        if (player.getCurrentTile().hasMoveTo()) {
+            int moveToTileId = player.getCurrentTile().getMoveToTileId();
+
+            Tile moveToTile = board.getTile(moveToTileId);
+
+            player.setCurrentTile(moveToTile);
+            movePlayerToTile(player, moveToTile.getTileId());
+        }
     }
 
     // TODO: Make sure the die cannot be rolled while it's being animated
@@ -418,7 +430,7 @@ public class GUIManager extends JComponent {
     }
 
     private void setIsAnimating(boolean isAnimating, String context) {
-        System.out.println("Set is animating: " + isAnimating + " -- context: " + context);
+//        System.out.println("Set is animating: " + isAnimating + " -- context: " + context);
         this.isAnimating = isAnimating;
     }
 

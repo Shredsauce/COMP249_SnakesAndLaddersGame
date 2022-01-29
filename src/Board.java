@@ -21,29 +21,6 @@ public class Board extends JPanel {
     public static int NUM_TAIL_TILES = 1;
     public static Int2 OFFSET = new Int2(100, 100);
 
-    // TODO: Make sure the value of an entry is not the key of another entry
-    // TODO: Option to randomly generate this. make sure elements are never on the same row
-    private Hashtable<Integer, Integer> defaultMoveToConfig = new Hashtable<Integer, Integer>() {
-        {put(1, 38);}
-        {put(4, 14);}
-        {put(9, 31);}
-        {put(16, 6);}
-        {put(21, 42);}
-        {put(28, 84);}
-        {put(36, 44);}
-        {put(48, 30);}
-        {put(51, 67);}
-        {put(62, 19);} // Most of the snake's head is on the 62
-        {put(64, 60);}
-        {put(64, 60);}
-        {put(71, 91);}
-        {put(80, 100);}
-        {put(93, 68);}
-        {put(95, 24);}
-        {put(97, 76);}
-        {put(98, 78);}
-    };
-
     private LadderAndSnake game;
     private Player[] players;
     private boolean isWinState;
@@ -117,10 +94,7 @@ public class Board extends JPanel {
         this.boardSize = boardSettings.boardSize;
         this.game = game;
 
-        Hashtable<Integer, Integer> moveToConfig = new Hashtable<Integer, Integer>();
-
         if (boardSettings.useDefault) {
-            moveToConfig = defaultMoveToConfig;
             boardSettings.horizontalChance = 1f;
             boardSettings.forwardChance = 1f;
         }
@@ -157,7 +131,7 @@ public class Board extends JPanel {
         startTile = createStartTile();
         lastTile = getTile(currentTileId);
 
-        moveToConfig = generateMoveToConfig(boardSettings);
+        Hashtable<Integer, Integer> moveToConfig = generateMoveToConfig(boardSettings, lastTile);
         applyMoveToConfig(moveToConfig);
 
         // Mouse related stuff inspired by this: http://www.ssaurel.com/blog/learn-how-to-make-a-swing-painting-and-drawing-application/
@@ -194,13 +168,37 @@ public class Board extends JPanel {
         return new Tile(0, startTilePos);
     }
 
-    private Hashtable<Integer, Integer> generateMoveToConfig(BoardSettings boardSettings) {
+    private Hashtable<Integer, Integer> generateMoveToConfig(BoardSettings boardSettings, Tile lastTile) {
         if (boardSettings.useDefault) {
-            return defaultMoveToConfig;
+            return boardSettings.getDefaultMoveToConfig();
         }
 
+        // TODO: Make sure the value of an entry is not the key of another entry
+        // TODO: Option to randomly generate this. make sure elements are never on the same row
         // TODO: Randomly generate move to config
-        return new Hashtable<Integer, Integer>();
+
+        Hashtable<Integer, Integer> generatedMoveToConfig = new Hashtable<Integer, Integer>();
+
+        for (int i = 1; i < lastTile.getTileId(); i++) {
+            Random random = new Random();
+            double moveToRandomResult = random.nextDouble(0.0, 1.0);
+
+            if (moveToRandomResult > boardSettings.getChanceOfHavingMoveTo()) continue;
+
+            int moveToId = random.nextInt(1, lastTile.getTileId());
+            boolean moveToAlreadySet = false;
+            for (int j = 0; j < generatedMoveToConfig.size(); j++) {
+                if (generatedMoveToConfig.containsValue(moveToId)) {
+                    moveToAlreadySet = true;
+                }
+            }
+
+            if (!moveToAlreadySet) {
+                generatedMoveToConfig.put(i, moveToId);
+            }
+        }
+
+        return generatedMoveToConfig;
     }
 
     private void applyMoveToConfig(Hashtable<Integer, Integer> moveToConfig) {
@@ -272,34 +270,6 @@ public class Board extends JPanel {
         }
 
         return sortedCoords;
-    }
-
-    // TODO: No longer used
-    public void loadDefaultBoard(Int2 boardSize) {
-        Hashtable<Integer, Integer> moveToConfig = defaultMoveToConfig;
-
-        this.tiles = new Tile[boardSize.x][boardSize.y];
-        for (int y = 0; y < boardSize.y; y++) {
-            for (int x = 0; x < boardSize.x; x++) {
-
-                int tileIndex = (y * boardSize.x);
-                // Account for odd rows going right to left
-                if (y % 2 == 1) {
-                    tileIndex += boardSize.x - 1 - x;
-                } else {
-                    tileIndex += x;
-                }
-
-                int tileId = getTotalTiles() - tileIndex;
-
-                Tile tile = new Tile(tileId, new Int2(x, y));
-                tiles[x][y] = tile;
-
-                if (moveToConfig.containsKey(tileId)) {
-                    tile.setMoveTo(moveToConfig.get(tileId));
-                }
-            }
-        }
     }
 
     public void setPlayers(Player[] players) {

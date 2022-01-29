@@ -9,13 +9,11 @@ import java.util.Hashtable;
 import java.util.Random;
 
 public class LadderAndSnake {
-    public boolean isDefaultGameType = true;
-    private int numPlayers;
+    private boolean isDefaultGameType = true;
     Random random = new Random();
     private Player[] players = new Player[0];
-    // TODO: Let players choose their jeton
-    private char[] jetonOptions = {'♟', '⛄', '☠', '☕'};
 
+    private char[] jetonOptions = {'♟', '⛄', '☠', '☕'};
     private int minPlayerCount = 2;
 
     Hashtable<Player, Integer> playerOrderRolls = new Hashtable<Player, Integer>();
@@ -27,7 +25,7 @@ public class LadderAndSnake {
 
     private BoardSettings boardSettings = new BoardSettings();
 
-    public LadderAndSnake(int numPlayers) {
+    public LadderAndSnake() {
         this.gameState = GameState.CHOOSE_PLAYERS;
     }
 
@@ -53,8 +51,6 @@ public class LadderAndSnake {
 
             text += " Player order determined. It goes " + Player.getPlayerOrderAsText(players) + ". Let's play!";
             GUIManager.getInstance().setDisplayText(text);
-
-//            ThreadManager.threadSleep(3000);
 
             gameState = GameState.PLAY;
             GUIManager.getInstance().updateDisplay();
@@ -90,22 +86,6 @@ public class LadderAndSnake {
 
         return false;
     }
-
-//    private void lockPlayerOrderDetermineRolls() {
-//        for (Player player : players) {
-//            boolean isTied = false;
-//
-//            for (Player otherPlayer : players) {
-//                if (otherPlayer == player) continue;
-//
-//                if (playerOrderRolls.get(player) == playerOrderRolls.get(otherPlayer)) {
-//                    isTied = true;
-//                }
-//            }
-//
-//            player.setOrderRollComplete(!isTied);
-//        }
-//    }
 
     private Player[] sortPlayersByRoll(Player[] players) {
         if (orderDetermineHasTies()) {
@@ -267,5 +247,9 @@ public class LadderAndSnake {
             boardSettings.horizontalChance = 0.5f;
             boardSettings.forwardChance = 0.5f;
         }
+    }
+
+    public boolean getIsDefaultGameType() {
+        return isDefaultGameType;
     }
 }
