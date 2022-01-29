@@ -61,4 +61,26 @@ public class Player {
     public void setOrderRollComplete(boolean complete) {
         orderRollComplete = complete;
     }
+
+    public static String getPlayerOrderAsText(Player[] players) {
+        return getPlayersAsText(players, "then");
+    }
+
+    public static String getPlayerListAsText(Player[] players) {
+        return getPlayersAsText(players, "and");
+    }
+
+    private static String getPlayersAsText(Player[] players, String lastJoiningWord) {
+        String text = "";
+        for (int i = 0; i < players.length; i++) {
+            if (i == players.length - 1) {
+                text += " " + lastJoiningWord + " ";
+            } else if (i > 0) {
+                text += ", ";
+            }
+
+            text += players[i].getIcon();
+        }
+        return text;
+    }
 }

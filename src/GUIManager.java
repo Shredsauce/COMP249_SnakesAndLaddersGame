@@ -13,9 +13,6 @@ public class GUIManager extends JComponent {
     public static int WIDTH = 600;
     public static int HEIGHT = 600;
 
-    private int minPlayerCount = 2;
-    private int maxPlayerCount = 4;
-
     private LadderAndSnake game;
     private int numPlayersChosen;
     private boolean hasMainMenuBeenInit;
@@ -24,9 +21,12 @@ public class GUIManager extends JComponent {
     private Container mainContainer;
     private JPanel choosePlayersPanel;
     private JPanel footerPanel;
+    private JPanel textDisplayPanel;
     private Container startBtnContainer;
     private Board board;
     public JButton rollDieBtn;
+    private String textToDisplay = "";
+    private boolean isAnimating;
 
     public static GUIManager getInstance() {
         return instance;
@@ -36,21 +36,32 @@ public class GUIManager extends JComponent {
         instance = this;
         this.game = game;
 
-        redraw();
+        frame = new JFrame("Snakes and Ladders game");
+        frame.setSize(WIDTH, HEIGHT);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        updateDisplay();
     }
 
-    private void closeWindow() {
-        if (frame != null) {
-            frame.setVisible(false);
-            frame.dispose();
-        }
-        hasMainMenuBeenInit = false;
+    public JFrame getFrame() {
+        return frame;
     }
 
-    public void redraw() {
+//    private void closeWindow() {
+//        if (frame != null) {
+//            frame.setVisible(false);
+//            frame.dispose();
+//        }
+//        hasMainMenuBeenInit = false;
+//    }
+
+    public void updateDisplay() {
         tryInitMainMenu();
-
         clearPanels();
+
+        mainContainer.add(choosePlayersPanel, BorderLayout.NORTH);
+        mainContainer.add(footerPanel, BorderLayout.WEST);
+        mainContainer.add(textDisplayPanel, BorderLayout.SOUTH);
 
         switch(game.getGameState()) {
             case NONE:
@@ -79,25 +90,17 @@ public class GUIManager extends JComponent {
                 break;
         }
 
-        mainContainer.add(choosePlayersPanel, BorderLayout.NORTH);
-        mainContainer.add(footerPanel, BorderLayout.SOUTH);
-
-        frame.setSize(WIDTH, HEIGHT);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        displayTextArea();
 
         frame.setVisible(true);
-
-
-
         frame.repaint();
     }
 
     private void tryInitMainMenu() {
         if (!hasMainMenuBeenInit) {
-            frame = new JFrame("") ;
-            mainContainer = new Container();
             choosePlayersPanel = new JPanel();
             footerPanel = new JPanel();
+            textDisplayPanel = new JPanel();
 
             mainContainer = frame.getContentPane();
             mainContainer.setLayout(new BorderLayout());
@@ -122,7 +125,6 @@ public class GUIManager extends JComponent {
             }
         }
     }
-
 
     private void displayPossiblePlayerButtons(LadderAndSnake game) {
         for (char jetonOption : game.getJetonOptions()) {
@@ -149,37 +151,67 @@ public class GUIManager extends JComponent {
     }
 
     private void onPlayerSelected(char jetonOption) {
-        System.out.println("on display selectasdf " + game.getPlayers().length);
+        System.out.println("Display button selected. Number of players so far: " + game.getPlayers().length);
 
         Player newPlayer = new Player(numPlayersChosen++, jetonOption);
         game.addPlayer(newPlayer);
-        System.out.println(newPlayer.getIcon() + " wants to play!");
+        setDisplayText(newPlayer.getIcon() + " wants to play!");
 
         if (game.getPlayers().length == game.getJetonOptions().length) {
-            startGame();
+            tryStartGame();
         } else {
-            redraw();
+            updateDisplay();
         }
     }
 
     private void tryDisplayStartButton() {
-        if (game.getPlayers().length < minPlayerCount) return;
+        if (game.getPlayers().length < game.getMinPlayerCount()) return;
         if (footerPanel.getComponents().length > 0) return;
 
         JButton startGameBtn = new JButton("Start game");
-        startGameBtn.addActionListener(event -> startGame());
+        startGameBtn.addActionListener(event -> tryStartGame());
         footerPanel.add(startGameBtn);
     }
 
-    private void startGame() {
+    private void displayTextArea() {
+        JTextArea textArea = new JTextArea();
+        textArea.append(textToDisplay);
+
+        removePreviousTextDisplays();
+
+        textDisplayPanel.add(textArea);
+    }
+
+    private void removePreviousTextDisplays() {
+        Component[] textAreaComponents = textDisplayPanel.getComponents();
+        for (Component textAreaComponent : textAreaComponents) {
+            textDisplayPanel.remove(textAreaComponent);
+        }
+    }
+
+    public void setDisplayText(String text) {
+        System.out.println(text);
+        textToDisplay = text;
+        displayTextArea();
+        frame.setVisible(true);
+        frame.repaint();
+    }
+
+    private void tryStartGame() {
         if (game.hasDeterminedPlayerOrder()) {
+
+//            ThreadManager.getInstance().threadSleep(3000);
+
             game.setGameState(GameState.PLAY);
         } else {
+            game.getCurrentPlayer();
+            String text = "Player order must be decided based on the highest roll. " + game.getCurrentPlayer().toString() + ", click anywhere to roll the die.";
+            GUIManager.getInstance().setDisplayText(text);
+
             game.setGameState(GameState.CHOOSE_PLAYER_ORDER);
         }
 
-        game.start();
-        redraw();
+        updateDisplay();
     }
 
     private void tryDisplayCancelButton() {
@@ -192,11 +224,11 @@ public class GUIManager extends JComponent {
 
     private void onCancelGame() {
         game.setGameState(GameState.MAIN_MENU);
-        redraw();
+        updateDisplay();
     }
 
     private void onWin(Player player) {
-        System.out.println(player.toString() + " wins!");
+        setDisplayText(player.toString() + " wins!");
 
         Thread thread = new Thread(() -> {
             board.setWinState(true);
@@ -207,10 +239,10 @@ public class GUIManager extends JComponent {
                 Int2 pos = new Int2(random.nextInt(0, WIDTH), random.nextInt(0, HEIGHT));
                 board.setDieRollPos(pos);
 
-                rollDie(DiceRollAction.WIN_STATE);
+                rollDie(DiceRollMode.WIN_STATE);
 
                 // TODO: Put as variable somewhere
-                threadSleep(5);
+                ThreadManager.getInstance().threadSleep(5);
             }
 
             board.setDieRollPos(Board.OFFSCREEN_DIE_POS);
@@ -219,7 +251,11 @@ public class GUIManager extends JComponent {
         thread.start();
     }
 
-    public void movePlayerToTile(Player player, int newTileId) {
+    public void movePlayer(Player player, int dieValue) {
+        int newTileId = player.getCurrentTile().getTileId() + dieValue;
+
+        String text = player.toString() + " rolled a " + dieValue;
+
         Thread thread = new Thread(() -> {
             boolean isPlayingMoveAnim = true;
             while (isPlayingMoveAnim) {
@@ -247,12 +283,10 @@ public class GUIManager extends JComponent {
 
                     numMovesMade++;
 
-                    System.out.println("Set player to tile " + nextTileId);
-
                     currentTile = board.getTile(nextTileId);
                     player.setCurrentTile(currentTile);
 
-                    threadSleep(300);
+                    ThreadManager.getInstance().threadSleep(300);
                 }
 
                 // If tile has a move-to (snake or ladder), move the player to move-to's tile
@@ -263,6 +297,7 @@ public class GUIManager extends JComponent {
 
                     player.setCurrentTile(moveToTile);
                 }
+                setDisplayText(text);
 
                 isPlayingMoveAnim = false;
 
@@ -276,16 +311,20 @@ public class GUIManager extends JComponent {
     }
 
     // TODO: Make sure the die cannot be rolled while it's being animated
-    public void rollDie(DiceRollAction diceRollAction) {
+    public void rollDie(DiceRollMode diceRollAction) {
+        if (isAnimating) return;
+        
         Thread thread = new Thread(() -> {
+            setIsAnimating(true, "Start roll die");
             int dieValue = animateDie();
-            threadSleep(500);
+            ThreadManager.getInstance().threadSleep(500);
+            setIsAnimating(false, "End roll die");
             onRollDieAnimComplete(dieValue, diceRollAction);
         });
         thread.start();
     }
 
-    private void onRollDieAnimComplete(int dieValue, DiceRollAction diceRollAction) {
+    private void onRollDieAnimComplete(int dieValue, DiceRollMode diceRollAction) {
         switch(diceRollAction) {
             case NONE:
 
@@ -295,8 +334,7 @@ public class GUIManager extends JComponent {
                 break;
             case MOVE:
                 Player currentPlayer = game.getCurrentPlayer();
-                int newTileId = currentPlayer.getCurrentTile().getTileId() + dieValue;
-                movePlayerToTile(currentPlayer, newTileId);
+                movePlayer(currentPlayer, dieValue);
                 game.setCurrentPlayer(game.getNextPlayerForMove());
                 break;
             case WIN_STATE:
@@ -322,7 +360,7 @@ public class GUIManager extends JComponent {
 
             board.setDieValue(uniqueRoll);
 
-            threadSleep(100);
+            ThreadManager.getInstance().threadSleep(100);
 
             currentFakeRollIndex++;
         }
@@ -338,17 +376,22 @@ public class GUIManager extends JComponent {
             // Using Thread.stop even though it is deprecated because it's the easiest way to stop the currently running thread
             animateShowBoardThread.stop();
             animateShowBoardThread = null;
+            setIsAnimating(false, "Force stop show board anim");
         }
 
         animateShowBoardThread = new Thread(() -> {
+            setIsAnimating(true, "Start show board anim");
+
             int currentTile = 1;
             while(currentTile < board.getLastTile().getTileId()) {
-                threadSleep(50);
+                ThreadManager.getInstance().threadSleep(40);
                 currentTile += 1;
                 board.setEndTileIdForAnim(currentTile);
             }
 
             board.setBoardAnimComplete();
+            setIsAnimating(false, "End show board anim");
+
         });
         animateShowBoardThread.start();
     }
@@ -369,11 +412,16 @@ public class GUIManager extends JComponent {
         return board;
     }
 
-    private void threadSleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+    private void setIsAnimating(boolean isAnimating) {
+        setIsAnimating(isAnimating, "");
+    }
+
+    private void setIsAnimating(boolean isAnimating, String context) {
+        System.out.println("Set is animating: " + isAnimating + " -- context: " + context);
+        this.isAnimating = isAnimating;
+    }
+
+    public boolean isInAnimation() {
+        return isAnimating;
     }
 }

@@ -155,29 +155,31 @@ public class Board extends JPanel {
         }
 
         startTile = createStartTile();
-
         lastTile = getTile(currentTileId);
 
         moveToConfig = generateMoveToConfig(boardSettings);
         applyMoveToConfig(moveToConfig);
 
         // Mouse related stuff inspired by this: http://www.ssaurel.com/blog/learn-how-to-make-a-swing-painting-and-drawing-application/
-        // TODO: De-spaghettify this a bit.
         addMouseListener(new MouseAdapter() {
             public void mouseReleased(MouseEvent e) {
-                nextDieMouseRollPos = new Int2(e.getX(), e.getY());
-                GUIManager.getInstance().rollDie(game.getDiceRollMode());
+                if (!GUIManager.getInstance().isInAnimation()) {
+                    nextDieMouseRollPos = new Int2(e.getX(), e.getY());
+                    GUIManager.getInstance().rollDie(game.getDiceRollMode());
+                }
             }
         });
 
         addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseDragged(MouseEvent e) {
-                nextDieMouseRollPos = new Int2(e.getX(), e.getY());
+                if (!GUIManager.getInstance().isInAnimation()) {
+                    nextDieMouseRollPos = new Int2(e.getX(), e.getY());
 
-                double x = previousMousePos.x - nextDieMouseRollPos.x;
-                double y = previousMousePos.y - nextDieMouseRollPos.y;
+                    double x = previousMousePos.x - nextDieMouseRollPos.x;
+                    double y = previousMousePos.y - nextDieMouseRollPos.y;
 
-                previousMousePos = nextDieMouseRollPos;
+                    previousMousePos = nextDieMouseRollPos;
+                }
             }
         });
     }

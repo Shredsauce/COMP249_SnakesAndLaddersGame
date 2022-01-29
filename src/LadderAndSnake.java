@@ -15,9 +15,11 @@ public class LadderAndSnake {
     // TODO: Let players choose their jeton
     private char[] jetonOptions = {'♟', '⛄', '☠', '☕'};
 
+    private int minPlayerCount = 2;
+
     Hashtable<Player, Integer> playerOrderRolls = new Hashtable<Player, Integer>();
 
-    private DiceRollAction diceRollMode = DiceRollAction.DETERMINE_ORDER;
+    private DiceRollMode diceRollMode = DiceRollMode.DETERMINE_ORDER;
     private Player currentPlayer;
     private GameState gameState;
     private boolean hasDeterminedPlayerOrder;
@@ -26,31 +28,36 @@ public class LadderAndSnake {
         this.gameState = GameState.CHOOSE_PLAYERS;
     }
 
-
-    public void start() {
-        currentPlayer = players[0];
-    }
-
     public void onRollToDeterminePlayerOrder(int dieValue) {
-        playerOrderRolls.put(currentPlayer, dieValue);
+        playerOrderRolls.put(getCurrentPlayer(), dieValue);
 
-        debugDisplayPlayerOrderDetermineRolls();
+        String text = getCurrentPlayer().toString() + " rolled " + dieValue + ".";
 
         if (playerOrderRolls.size() != players.length) {
-            currentPlayer = getNextPlayerForRollDetermine();
+            Player nextPlayerForDieRoll = getNextPlayerForRollDetermine();
+            text += " " + nextPlayerForDieRoll.toString() + ", roll the die";
+            setCurrentPlayer(nextPlayerForDieRoll);
         } else if (orderDetermineHasTies()) {
-            removeTiedPlayersFromList();
+            Player[] tiedPlayers = getTiedPlayers();
+            text += Player.getPlayerListAsText(tiedPlayers) + " are tied.";
+
+            removePlayersFromOrderRollList(tiedPlayers);
         } else {
-            System.out.println("Yay, we may begin!");
+
+            diceRollMode = DiceRollMode.MOVE;
+            players = sortPlayersByRoll(players);
+            hasDeterminedPlayerOrder = true;
+
+            text += " Player order determined. It goes " + Player.getPlayerOrderAsText(players) + ". Let's play!";
+            GUIManager.getInstance().setDisplayText(text);
+
+//            ThreadManager.threadSleep(3000);
 
             gameState = GameState.PLAY;
-            GUIManager.getInstance().redraw();
-
-            diceRollMode = DiceRollAction.MOVE;
-            sortPlayersByRoll();
-            hasDeterminedPlayerOrder = true;
-            debugDisplayPlayerOrderDetermineRolls();
+            GUIManager.getInstance().updateDisplay();
         }
+
+        GUIManager.getInstance().setDisplayText(text);
     }
 
     public boolean hasDeterminedPlayerOrder() {
@@ -81,26 +88,26 @@ public class LadderAndSnake {
         return false;
     }
 
-    private void lockPlayerOrderDetermineRolls() {
-        for (Player player : players) {
-            boolean isTied = false;
+//    private void lockPlayerOrderDetermineRolls() {
+//        for (Player player : players) {
+//            boolean isTied = false;
+//
+//            for (Player otherPlayer : players) {
+//                if (otherPlayer == player) continue;
+//
+//                if (playerOrderRolls.get(player) == playerOrderRolls.get(otherPlayer)) {
+//                    isTied = true;
+//                }
+//            }
+//
+//            player.setOrderRollComplete(!isTied);
+//        }
+//    }
 
-            for (Player otherPlayer : players) {
-                if (otherPlayer == player) continue;
-
-                if (playerOrderRolls.get(player) == playerOrderRolls.get(otherPlayer)) {
-                    isTied = true;
-                }
-            }
-
-            player.setOrderRollComplete(!isTied);
-        }
-    }
-
-    private void sortPlayersByRoll() {
+    private Player[] sortPlayersByRoll(Player[] players) {
         if (orderDetermineHasTies()) {
             System.out.println("Error: There are not supposed to be any ties at this point.");
-            return;
+            return players;
         }
 
         int currentIndex = 0;
@@ -126,20 +133,12 @@ public class LadderAndSnake {
 
             currentIndex++;
         }
-    }
 
-    private void debugDisplayPlayerOrderDetermineRolls() {
-        System.out.println("-------------------------------------------------------");
-        for (Player player : players) {
-            if (currentPlayer == player){
-                System.out.print("*");
-            }
-            System.out.println("Player "+player.getIcon() + " rolled " + playerOrderRolls.get(player));
-        }
+        return players;
     }
 
     public Player getNextPlayerForMove() {
-        int currentPlayerIndex = getPlayerIndex(currentPlayer);
+        int currentPlayerIndex = getPlayerIndex(getCurrentPlayer());
 
         return players[(currentPlayerIndex + 1) % players.length];
     }
@@ -156,12 +155,10 @@ public class LadderAndSnake {
         return playerIndex;
     }
 
-    private void removeTiedPlayersFromList() {
+    private Player[] getTiedPlayers() {
         ArrayList<Player> playersToRemove = new ArrayList<Player>();
 
         for (Player player : players) {
-            boolean isTied = false;
-
             for (Player otherPlayer : players) {
                 if (otherPlayer == player) continue;
 
@@ -171,6 +168,16 @@ public class LadderAndSnake {
             }
         }
 
+        // Transform ArrayList<Player> to Player[]
+        Player[] playersAsArray = new Player[playersToRemove.size()];
+        for (int i = 0; i < playersAsArray.length; i++) {
+            playersAsArray[i] = playersToRemove.get(i);
+        }
+
+        return playersAsArray;
+    }
+
+    private void removePlayersFromOrderRollList(Player[] playersToRemove) {
         for (Player player : playersToRemove) {
             playerOrderRolls.remove(player);
         }
@@ -191,7 +198,7 @@ public class LadderAndSnake {
         return result;
     }
 
-    public DiceRollAction getDiceRollMode() {
+    public DiceRollMode getDiceRollMode() {
         return diceRollMode;
     }
 
@@ -212,6 +219,10 @@ public class LadderAndSnake {
     }
 
     public Player getCurrentPlayer() {
+        if (currentPlayer == null && players.length > 0) {
+            currentPlayer = players[0];
+        }
+
         return currentPlayer;
     }
 
@@ -229,5 +240,13 @@ public class LadderAndSnake {
 
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
+    }
+
+    public int getMinPlayerCount() {
+        return minPlayerCount;
+    }
+
+    public int getMaxPlayerCount() {
+        return jetonOptions.length;
     }
 }

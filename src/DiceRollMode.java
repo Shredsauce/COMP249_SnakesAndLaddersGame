@@ -4,7 +4,7 @@
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
 
-public enum DiceRollAction {
+public enum DiceRollMode {
     NONE,
     DETERMINE_ORDER,
     MOVE,
