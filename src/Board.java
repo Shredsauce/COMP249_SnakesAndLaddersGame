@@ -642,9 +642,7 @@ public class Board extends JPanel {
 
     private void drawSnake(Graphics2D g2d, int startTileId, int endTileId) {
         float snakeThickness = 5f;
-
-        int snakePosYOffset = 2*TILE_SIZE/3;
-
+        
         Tile startTile = getTile(startTileId);
         Tile endTile = getTile(endTileId);
 
@@ -652,13 +650,13 @@ public class Board extends JPanel {
         Int2 tileEndPos = endTile.getPosition();
 
         int startPosX = tileStartPos.x + TILE_HALF_SIZE;
-        int startPosY = tileStartPos.y + snakePosYOffset;
+        int startPosY = tileStartPos.y + TILE_HALF_SIZE;
 
         int endPosX = tileEndPos.x + TILE_HALF_SIZE;
-        int endPosY = tileEndPos.y + TILE_SIZE - 2*snakePosYOffset;
+        int endPosY = tileEndPos.y + TILE_HALF_SIZE;
 
         double x = startPosX - endPosX;
-        double y = tileStartPos.y - endPosY;
+        double y = startPosY - endPosY;
 
         double distance = (int)Math.sqrt(x*x + y*y);
         double angle = Math.atan2(y, x) + Math.PI;
@@ -667,19 +665,25 @@ public class Board extends JPanel {
         g2d.rotate(angle, startPosX, startPosY);
 
         double time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-        int parts = 10;
-        double waveAmplitude = 4;
-        double partLengthX = distance / parts;
-        for (int i = 0; i < parts-1; i++) {
+        int partLength = 10;
+        double waveAmplitude = 2;
+        int numParts = (int)(distance / partLength);
+        double partLengthX = distance / numParts;
+        int headSize = 6;
+
+        for (int i = 0; i < numParts-1; i++) {
             double partStartX = startPosX + (i * partLengthX);
             double partStartY = startPosY + waveAmplitude*Math.sin(partStartX + time);
             double partEndX = startPosX + ((i+1) * partLengthX);
             double partEndY = startPosY + waveAmplitude*Math.sin(partEndX + time);
 
-            // TODO: The tail of the snake doesn't point exactly at the target square (95 should go to 24 but looks like it leads to the above square, 37)
-
             g2d.setStroke(new BasicStroke(snakeThickness));
             g2d.drawLine((int)partStartX, (int)partStartY, (int)partEndX, (int)partEndY);
+
+            // Draw the head
+            if (i == 0) {
+                drawCircle(g2d, new Int2((int)partStartX, (int)partStartY), headSize);
+            }
         }
         g2d.rotate(-angle, startPosX, startPosY);
     }
