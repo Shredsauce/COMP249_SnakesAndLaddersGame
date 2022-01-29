@@ -9,6 +9,7 @@ import java.util.Hashtable;
 import java.util.Random;
 
 public class LadderAndSnake {
+    public boolean isDefaultGameType = true;
     private int numPlayers;
     Random random = new Random();
     private Player[] players = new Player[0];
@@ -23,6 +24,8 @@ public class LadderAndSnake {
     private Player currentPlayer;
     private GameState gameState;
     private boolean hasDeterminedPlayerOrder;
+
+    private BoardSettings boardSettings = new BoardSettings();
 
     public LadderAndSnake(int numPlayers) {
         this.gameState = GameState.CHOOSE_PLAYERS;
@@ -248,5 +251,21 @@ public class LadderAndSnake {
 
     public int getMaxPlayerCount() {
         return jetonOptions.length;
+    }
+
+    public BoardSettings getBoardSettings() {
+        return boardSettings;
+    }
+
+    public void toggleGameType() {
+        isDefaultGameType = !isDefaultGameType;
+
+        if (isDefaultGameType) {
+            boardSettings = new BoardSettings();
+        } else {
+            boardSettings.useDefault = false;
+            boardSettings.horizontalChance = 0.5f;
+            boardSettings.forwardChance = 0.5f;
+        }
     }
 }

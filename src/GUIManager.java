@@ -68,25 +68,23 @@ public class GUIManager extends JComponent {
                 break;
             case CHOOSE_PLAYERS:
                 displayPossiblePlayerButtons(game);
+            case MAIN_MENU:
                 tryDisplayStartButton();
+                tryDisplayToggleGameTypeButton();
                 break;
             case CHOOSE_PLAYER_ORDER:
-                board = createBoard();
+                board = createBoard(game.getBoardSettings());
                 mainContainer.add(board, BorderLayout.CENTER);
                 tryDisplayCancelButton();
                 break;
             case BOARD_CREATION_ANIMATION:
                 break;
             case PLAY:
-                board = createBoard();
+                board = createBoard(game.getBoardSettings());
                 board.setPlayers(game.getPlayers());
                 animateShowBoard();
                 mainContainer.add(board, BorderLayout.CENTER);
                 tryDisplayCancelButton();
-                break;
-            case MAIN_MENU:
-
-                tryDisplayStartButton();
                 break;
         }
 
@@ -166,11 +164,24 @@ public class GUIManager extends JComponent {
 
     private void tryDisplayStartButton() {
         if (game.getPlayers().length < game.getMinPlayerCount()) return;
-        if (footerPanel.getComponents().length > 0) return;
+//        if (footerPanel.getComponents().length > 0) return;
 
         JButton startGameBtn = new JButton("Start game");
         startGameBtn.addActionListener(event -> tryStartGame());
         footerPanel.add(startGameBtn);
+    }
+
+    private void tryDisplayToggleGameTypeButton() {
+        String gameTypeText = game.isDefaultGameType ? "Default game" : "Random game";
+        JButton toggleGameTypeBtn = new JButton(gameTypeText);
+
+        toggleGameTypeBtn.addActionListener(event -> toggleGameType());
+        footerPanel.add(toggleGameTypeBtn);
+    }
+
+    private void toggleGameType() {
+        game.toggleGameType();
+        updateDisplay();
     }
 
     private void displayTextArea() {
@@ -397,18 +408,8 @@ public class GUIManager extends JComponent {
     }
 
     // TODO: This should be in the Board class
-    public Board createBoard() {
-        BoardSettings boardSettings = new BoardSettings();
-
-        // TODO: Uncomment for randomly generated board
-        /*
-        boardSettings.useDefault = false;
-        boardSettings.horizontalChance = 0.5f;
-        boardSettings.forwardChance = 0.5f;
-        */
-
+    public Board createBoard(BoardSettings boardSettings) {
         board = new Board(game, boardSettings);
-
         return board;
     }
 
