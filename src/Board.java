@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import javax.swing.*;
 
+/*** * Representation of the snakes and ladders board */
 public class Board extends JPanel {
     public static Int2 OFFSCREEN_DIE_POS = new Int2(-100, -100);
     public static int TILE_SIZE = 30;
@@ -48,7 +49,7 @@ public class Board extends JPanel {
     private boolean isWinState;
 
     // Board
-    public Int2 boardSize = new Int2(10, 10);
+    private Int2 boardSize = new Int2(10, 10);
     private boolean boardShowAnimComplete;
     private Color boardColor = new Color(145, 92, 48);
 
@@ -68,8 +69,6 @@ public class Board extends JPanel {
     private Int2 previousMousePos = new Int2(0, 0);
     private int endTileIdForAnim;
     private Int2 nextDieMouseRollPos = OFFSCREEN_DIE_POS;
-    private double dieRollMagnitude;
-    private double dieRollAngle;
 
     public Tile getTile(int tileId) {
         // The zeroth start tile is not part of the 2D array of tiles so it is handled this way
@@ -177,10 +176,6 @@ public class Board extends JPanel {
 
                 double x = previousMousePos.x - nextDieMouseRollPos.x;
                 double y = previousMousePos.y - nextDieMouseRollPos.y;
-
-                // TODO: Do something with this or remove it
-                dieRollMagnitude = Math.sqrt(x*x + y*y);
-                dieRollAngle = Math.atan2(y, x);
 
                 previousMousePos = nextDieMouseRollPos;
             }
