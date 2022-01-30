@@ -14,7 +14,7 @@ public class GUIManager extends JComponent {
     public static GUIManager instance;
     public static int WIDTH = 600;
     public static int HEIGHT = 600;
-    public static Int2 OFFSCREEN_DIE_POS = new Int2(-100, -100);
+    public static Int2 OFFSCREEN_POSITION = new Int2(-100, -100);
 
     private LadderAndSnake game;
     private boolean hasMainMenuBeenInit;
@@ -28,7 +28,7 @@ public class GUIManager extends JComponent {
     private boolean isAnimating;
     private Thread animateShowBoardThread;
 
-    private Int2 nextDieMouseRollPos = OFFSCREEN_DIE_POS;
+    private Int2 nextDieMouseRollPos = OFFSCREEN_POSITION;
     private Int2 previousMousePos = new Int2(0, 0);
 
     public static GUIManager getInstance() {
@@ -79,6 +79,7 @@ public class GUIManager extends JComponent {
                 displayPossiblePlayerButtons(game.getJetonOptions());
 
                 if (game.getPlayers().length >= game.getMinPlayerCount()) {
+                    displayToggleGameTypeButton();
                     displayStartButton();
                 }
 
@@ -287,6 +288,13 @@ public class GUIManager extends JComponent {
         game.setGameState(GameState.MAIN_MENU);
         setDisplayText("");
         updateDisplay();
+        resetPlayerPositions();
+    }
+
+    private void resetPlayerPositions() {
+        for(Player player : game.getPlayers()) {
+            player.setCurrentPosition(OFFSCREEN_POSITION);
+        }
     }
 
     /** Called after a player has won.
@@ -310,7 +318,7 @@ public class GUIManager extends JComponent {
                 ThreadManager.getInstance().threadSleep(5);
             }
 
-            GUIManager.getInstance().setDieRollPos(GUIManager.OFFSCREEN_DIE_POS);
+            GUIManager.getInstance().setDieRollPos(GUIManager.OFFSCREEN_POSITION);
             DrawingManager.getInstance().setShouldRefreshBackground(true);
             setIsAnimating(false, "Start win animation");
             onQuitToMainMenu();
@@ -361,6 +369,7 @@ public class GUIManager extends JComponent {
         int numMovesToMake = newTileId - currentTile.getTileId();
         int numMovesMade = 0;
 
+        setIsAnimating(true, "Start player move anim");
         while (numMovesMade < numMovesToMake) {
             int currentTileId = currentTile.getTileId();
 
@@ -374,19 +383,26 @@ public class GUIManager extends JComponent {
 
             currentTile = board.getTile(nextTileId);
             player.setCurrentTile(currentTile);
+            Int2 goalPos = currentTile.getPosition();
+            player.setCurrentPosition(goalPos);
 
             ThreadManager.getInstance().threadSleep(300);
         }
 
+        System.out.println("Has move to: " + player.getCurrentTile().hasMoveTo());
         // If tile has a move-to (snake or ladder), move the player to move-to's tile
-        if (player.getCurrentTile().hasMoveTo()) {
-            int moveToTileId = player.getCurrentTile().getMoveToTileId();
+        if (currentTile.hasMoveTo()) {
+            int moveToTileId = currentTile.getMoveToTileId();
 
+            System.out.println("Move to tile id: " + moveToTileId);
             Tile moveToTile = board.getTile(moveToTileId);
 
             player.setCurrentTile(moveToTile);
-            movePlayerToTile(player, moveToTile.getTileId());
+            Int2 goalPos = moveToTile.getPosition();
+            player.setCurrentPosition(goalPos);
         }
+
+        setIsAnimating(false, "End player move anim");
     }
 
     /** Roll dice. Calls onRollDieAnimComplete after the animation has completed.

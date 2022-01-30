@@ -282,9 +282,7 @@ public class LadderAndSnake {
         if (isDefaultGameType) {
             boardSettings = new BoardSettings();
         } else {
-            boardSettings.useDefault = false;
-            boardSettings.horizontalChance = 0.5f;
-            boardSettings.forwardChance = 0.5f;
+            boardSettings.SetAsRandom();
         }
     }
 

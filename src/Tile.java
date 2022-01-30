@@ -39,4 +39,9 @@ public class Tile {
     public Int2 getPosition() {
         return new Int2(coordinates.x * DrawingManager.TILE_SIZE + DrawingManager.OFFSET.x, coordinates.y * DrawingManager.TILE_SIZE + DrawingManager.OFFSET.y);
     }
+
+
+    public String toString() {
+        return "Tile " + tileId + " " + getPosition().toString();
+    }
 }

@@ -10,7 +10,7 @@ import java.util.Hashtable;
 public class Player {
     private Tile currentTile;
     private String icon;
-    private boolean orderRollComplete;
+    private Int2 position = new Int2();
 
     /** Player constructor
      * @param icon The icon that the player will use.
@@ -70,5 +70,13 @@ public class Player {
             text += players[i].getIcon();
         }
         return text;
+    }
+
+    public Int2 getCurrentPosition() {
+        return position;
+    }
+
+    public void setCurrentPosition(Int2 position) {
+        this.position = position;
     }
 }

@@ -76,12 +76,13 @@ public class DrawingManager extends JPanel {
             int shadowOffset = 1;
 
             setFontSize(g2d, 30f);
-            Tile playerTile = player.getCurrentTile();
+            Int2 playerPosition = player.getCurrentPosition();
+
             g2d.setColor(Color.black);
-            g2d.drawString(""+player.getIcon(), playerTile.getPosition().x+shadowOffset,  playerTile.getPosition().y+shadowOffset+TILE_SIZE);
+            g2d.drawString(""+player.getIcon(), playerPosition.x+shadowOffset,  playerPosition.y+shadowOffset+TILE_SIZE);
 
             g2d.setColor(Color.white);
-            g2d.drawString(""+player.getIcon(), playerTile.getPosition().x,  playerTile.getPosition().y+TILE_SIZE);
+            g2d.drawString(""+player.getIcon(), playerPosition.x,  playerPosition.y+TILE_SIZE);
         }
     }
 
@@ -145,7 +146,7 @@ public class DrawingManager extends JPanel {
     }
 
     private void drawTile(Graphics2D g2d, Tile tile) {
-        int endTileAnimSwitch = board.getEndTileIdForAnim() % 2;
+        int endTileAnimSwitch = board.getEndTileIdForAnim() % 1;
         Color tileColor = (tile.getTileId() % 2) + endTileAnimSwitch == 1 ? oddTileColor : evenTileColor;
         g2d.setColor(tileColor);
 
@@ -445,7 +446,7 @@ public class DrawingManager extends JPanel {
     private double getSnakeTailAngle(Int2 tailTileCoord, Int2 nextTileCoord) {
         if (nextTileCoord.x > tailTileCoord.x) return 0;
         if (nextTileCoord.x < tailTileCoord.x) return Math.PI;
-        if (nextTileCoord.y > tailTileCoord.y)  return Math.PI/2;
+        if (nextTileCoord.y > tailTileCoord.y) return Math.PI/2;
         if (nextTileCoord.y < tailTileCoord.y) return (3*Math.PI)/2;
 
         return 0;

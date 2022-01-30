@@ -12,7 +12,7 @@ public class BoardSettings {
     public boolean useDefault = true;
     public float horizontalChance = 1f;
     public float forwardChance = 1f;
-    public double chanceOfHavingMoveTo = 0.4;
+    public float chanceOfHavingMoveTo = 0.4f;
 
     // Ladder visual settings
     public float ladderThickness = 3f;
@@ -46,5 +46,11 @@ public class BoardSettings {
 
     public double getChanceOfHavingMoveTo() {
         return chanceOfHavingMoveTo;
+    }
+
+    public void SetAsRandom() {
+        useDefault = false;
+        horizontalChance = 0.3f;
+        forwardChance = 0.8f;
     }
 }
