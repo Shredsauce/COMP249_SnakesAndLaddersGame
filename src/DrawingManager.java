@@ -11,35 +11,52 @@ import java.util.concurrent.TimeUnit;
 
 /** Handles the drawing for the board and the die. */
 public class DrawingManager extends JPanel {
+    /** The pixel size of a tile (used for both the width and the height) */
     public static int TILE_SIZE = 30;
+    /** The half size of a tile. This is to prevent the use of division. */
     public static int TILE_HALF_SIZE = TILE_SIZE/2;
+    /** This is the tile margin used for drawing the tiles. */
     public static int TILE_SPACING = 5;
+    /** This is the number of tail tiles. I originally wanted to have a few tiles that make up the tail but I was running out of time. */
     public static int NUM_TAIL_TILES = 1;
+    /** How offset the board should be drawn. */
     public static Int2 OFFSET = new Int2(100, 100);
 
+    /** A reference to the board. */
     private Board board;
 
+    /** Whether the background should be refreshed. This is used for the dice falling animation. */
     private boolean shouldRefreshBackground = true;
+    /** The angle that the die should be drawn at. This is randomly generated during the dice rolling animation to give it a nice wobbly effect. */
     private double dieAngle;
+    /** The maximum number of pixels that the dice should move during its dice rolling animation. */
     private int maxDiePositionOffset = 8;
+    /** The offset position of the dice used for the rolling animation. */
     private Int2 diePositionOffset = new Int2(0, 0);
+    /** The previous value of the dice used for the dice rolling animation. */
     private int previousDieValue;
+    /** The odd tile color. */
     private Color oddTileColor = new Color(50, 90, 200);
+    /** The even tile color. */
     private Color evenTileColor = new Color(200, 200, 50);
+    /** The color of the board background. */
     private Color boardColor = new Color(145, 92, 48);
 
-    // Singleton
+    /** Singleton instance of the Drawing Manager. */
     private static DrawingManager instance;
+    /** @return Singleton instance of the Drawing Manager. */
     public static DrawingManager getInstance() {
         return instance;
     }
 
-    /** Constructor that takes a JFrame. */
+    /** Constructor that takes a JFrame.
+     * @param frame The JFrame to use for drawing. */
     public DrawingManager (JFrame frame) {
         instance = this;
         frame.getContentPane().add(this, BorderLayout.CENTER);
     }
 
+    /** Overridden paint component. */
     @Override
     public void paintComponent(Graphics g) {
         if (shouldRefreshBackground) {
@@ -96,7 +113,7 @@ public class DrawingManager extends JPanel {
         int edgeOffset = 10;
         int arcValue = 7;
 
-        Int2 pos = new Int2(GUIManager.getInstance().getNextDieMouseRollPos().x - size/2, GUIManager.getInstance().getNextDieMouseRollPos().y - size/2);
+        Int2 pos = new Int2(GUIManager.getInstance().getCurrentMousePosition().x - size/2, GUIManager.getInstance().getCurrentMousePosition().y - size/2);
 
         int dotRadius = 6;
 
@@ -245,7 +262,8 @@ public class DrawingManager extends JPanel {
         return nextTile == null || tileId == board.getEndTileIdForAnim();
     }
 
-    /** Set whether or not the background should refresh. This is used for the falling dice animation when a player wins. */
+    /** Set whether the background should refresh. This is used for the falling dice animation when a player wins.
+     * @param shouldRefreshBackground Boolean to determine whether the background should refresh. */
     public void setShouldRefreshBackground(boolean shouldRefreshBackground) {
         this.shouldRefreshBackground = shouldRefreshBackground;
     }
@@ -483,7 +501,8 @@ public class DrawingManager extends JPanel {
         g2d.setFont(newFont);
     }
 
-    /** Set the board that will be used for drawing. */
+    /** Set the board that will be used for drawing.
+     * @param board Reference to the board to set. */
     public void setBoard(Board board) {
         this.board =  board;
         previousDieValue = board.getCurrentDieValue();

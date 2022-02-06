@@ -4,12 +4,13 @@
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
 
-import java.util.Hashtable;
-
 /** Represents a player that is playing the snakes and ladders game. */
 public class Player {
+    /** Reference to the tile that the player is currently on. */
     private Tile currentTile;
+    /** The icon that the player chose at the beginning of the game. */
     private String icon;
+    /** The position of the player. */
     private Int2 position = new Int2();
 
     /** Player constructor
@@ -19,7 +20,7 @@ public class Player {
         this.icon = icon;
     }
 
-    /** Get the current tile that the player is on. */
+    /** @return The current tile that the player is on. */
     public Tile getCurrentTile() {
         return currentTile;
     }
@@ -72,12 +73,13 @@ public class Player {
         return text;
     }
 
-    /** Get this player's current position. */
+    /** @return This player's current position. */
     public Int2 getCurrentPosition() {
         return position;
     }
 
-    /** Set this player's position. */
+    /** Set this player's position.
+     * @param position The position to set the player at. */
     public void setCurrentPosition(Int2 position) {
         this.position = position;
     }

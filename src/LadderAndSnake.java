@@ -8,18 +8,30 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Random;
 
+/** The snakes and ladders game. */
 public class LadderAndSnake {
+    /** Whether the game type is default. Starts off as true since this is the game type that will be graded. */
     private boolean isDefaultGameType = true;
+    /** A reference to the random instance used for randomization. */
     private Random random = new Random();
+    /** Array of players. */
     private Player[] players = new Player[0];
+    /** The player icon options. These work as a character array, however, JavaDoc doesn't complains so I'm using a String array instead. */
     private String[] jetonOptions = {"♟", "⛄", "☠", "☕"};
+    /** The minimum number of players needed to start the game. */
     private int minPlayerCount = 2;
+    /** The order of the players based on their rolls. */
     private Hashtable<Player, Integer> playerOrderRolls = new Hashtable<Player, Integer>();
+    /** The mode that the dice is in which determines what happens after its rolling animation has completed. */
     private DiceRollMode diceRollMode = DiceRollMode.DETERMINE_ORDER;
+    /** The current player whose turn it is. */
     private Player currentPlayer;
+    /** The state of the game. */
     private GameState gameState;
+    /** Whether the player order has been determined. */
     private boolean hasDeterminedPlayerOrder;
 
+    /** The settings that the generated board should use. */
     private BoardSettings boardSettings = new BoardSettings();
 
     /** Constructor that sets the initial game state to CHOOSE_PLAYERS. */
@@ -220,7 +232,7 @@ public class LadderAndSnake {
         return diceRollMode;
     }
 
-    /** Get the list of players. */
+    /** @return The list of players. */
     public Player[] getPlayers() {
         return players;
     }
@@ -248,7 +260,8 @@ public class LadderAndSnake {
         return currentPlayer;
     }
 
-    /** Set the player those turn it is. */
+    /** Set the player those turn it is.
+     * @param player The player whose turn it is. */
     public void setCurrentPlayer(Player player) {
         currentPlayer = player;
     }
@@ -263,7 +276,8 @@ public class LadderAndSnake {
         return gameState;
     }
 
-    /** Set the game state which will be used to display the menu options. */
+    /** Set the game state which will be used to display the menu options.
+     * @param gameState The game state that's being set. */
     public void setGameState(GameState gameState) {
         this.gameState = gameState;
     }
@@ -273,12 +287,12 @@ public class LadderAndSnake {
         return minPlayerCount;
     }
 
-    /** Get the maximum number of players allowed to play the game. This is determined by the number of icon options. */
+    /** @return The maximum number of players allowed to play the game. This is determined by the number of icon options. */
     public int getMaxPlayerCount() {
         return jetonOptions.length;
     }
 
-    /** Get the board settings that the new board should use upon creation. */
+    /** @return The board settings that the new board should use upon creation. */
     public BoardSettings getBoardSettings() {
         return boardSettings;
     }

@@ -6,8 +6,10 @@
 
 import java.util.Scanner;
 
+/** The snakes and ladders game entry point. */
 public class PlayLadderAndSnake {
-    /** The game's entry point. */
+    /** The game's entry point.
+     * @param args The entry point arguments. These aren't being used in this case. */
     public static void main(String[] args) {
         LadderAndSnake game = new LadderAndSnake();
         GUIManager guiManager = new GUIManager(game);

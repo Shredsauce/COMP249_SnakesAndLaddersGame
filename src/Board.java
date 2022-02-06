@@ -8,20 +8,29 @@ import java.util.*;
 
 /** Representation of the snakes and ladders board */
 public class Board {
+    /** Board settings. */
     private BoardSettings boardSettings;
 
+    /** Reference to the snakes and ladders game. */
     private LadderAndSnake game;
+    /** Array of players. */
     private Player[] players;
 
-    // Tiles
+    /** 2D array of tiles. */
     private Tile[][] tiles;
+    /** A reference to the start tile. */
     private Tile startTile;
+    /** A reference to last tile. */
     private Tile lastTile;
+    /** The id of the end tile used for the board showing animation. */
     private int endTileIdForAnim;
 
+    /** Whether the board showing animation has completed. */
     private boolean boardShowAnimComplete;
 
+    /** The number of tiles that make up the width and height of the board. Set to 10x10 by default. */
     private Int2 boardSize = new Int2(10, 10);
+    /** The current value of the die.*/
     private int currentDieValue = 6;
 
     /** @return The tile with tile id tileId.
@@ -45,7 +54,9 @@ public class Board {
         return null;
     }
 
-    /** @return The tile at the specified coordinates. Returns null if the tile at the specified coordinates is non-existant. Clamps the coordinates to the board size.*/
+    /** @return The tile at the specified coordinates. Returns null if the tile at the specified coordinates is non-existant. Clamps the coordinates to the board size.
+     * @param coord The coordinates to get the tile at.
+     * */
     public Tile getTileAtCoordinates(Int2 coord) {
         int clampedX = coord.x;
         if (clampedX < 0) {
@@ -66,7 +77,9 @@ public class Board {
         return tile;
     }
 
-    /** Constructor that takes a LadderAndSnake game as a parameter. */
+    /** Constructor that takes a LadderAndSnake game as a parameter.
+     * @param game The snakes and ladders game.
+     * */
     public Board(LadderAndSnake game) {
         this.boardSettings = game.getBoardSettings();
         this.boardSize = boardSettings.boardSize;
@@ -204,7 +217,7 @@ public class Board {
         return validCoords;
     }
 
-    /**  */
+    /** Sort the valid neighboring coordinates by their horizontal and forward preference. */
     private ArrayList<Int2> sortValidCoordsByPreference(Tile tile, ArrayList<Int2> validCoords, boolean preferHorizontal, boolean preferForward) {
         ArrayList<Int2> sortedCoords = new ArrayList<Int2>();
         ArrayList<Int2> rejectedCoords = new ArrayList<Int2>();
@@ -264,7 +277,9 @@ public class Board {
         return sortedCoords;
     }
 
-    /** Set the players to the board and place them on the starting tile. */
+    /** Set the players to the board and place them on the starting tile.
+     * @param players the player to initialize.
+     * */
     public void initPlayers(Player[] players) {
         this.players = players;
 
@@ -283,7 +298,9 @@ public class Board {
         return players;
     }
 
-    /** Set the board's die value. */
+    /** Set the board's die value.
+     * @param dieValue The value of the die.
+     * */
     public void setDieValue(int dieValue) {
         currentDieValue = dieValue;
     }
@@ -308,12 +325,15 @@ public class Board {
         return boardSettings;
     }
 
-    /** Set the end tile's id that will be used for the board showing animation. */
+    /** Set the end tile's id that will be used for the board showing animation.
+     * @param endTileIdForAnim The id of the end tile that will be used for the board showing animation.
+     * */
     public void setEndTileIdForAnim(int endTileIdForAnim) {
         this.endTileIdForAnim = endTileIdForAnim;
     }
 
-    /** Get the id of the end tile that will be used for the board showing animation. */
+    /** Get the id of the end tile that will be used for the board showing animation.
+     * @return The id of the end tile used for the show board animation. */
     public int getEndTileIdForAnim() {
         return endTileIdForAnim;
     }

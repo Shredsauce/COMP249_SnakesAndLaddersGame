@@ -11,26 +11,46 @@ import java.util.Random;
 
 /** Handles the buttons and panels. */
 public class GUIManager extends JComponent {
+    /** The GUIManager instance. */
     public static GUIManager instance;
+    /** The width of the window. */
     public static int WIDTH = 600;
+    /** The height of the window. */
     public static int HEIGHT = 600;
+
+    /** An arbitrary position off-screen. */
     public static Int2 OFFSCREEN_POSITION = new Int2(-100, -100);
 
+    /** The snakes and ladders game. */
     private LadderAndSnake game;
+
+    /** Has the main menu been initialized? */
     private boolean hasMainMenuBeenInit;
 
+    /** The JFrame used for drawing elements. */
     private JFrame frame;
+
+    /** The main container that contains all of the other panels. */
     private Container mainContainer;
+    /** The header panel. */
     private JPanel headerPanel;
+    /** The panel containing the on-screen text. */
     private JPanel textDisplayPanel;
-    private Board board;
+    /** The text to display on-screen. */
     private String textToDisplay = "";
+    /** The board. */
+    private Board board;
+    /** Is the show board animation happening right now? */
     private boolean isAnimating;
+    /** The show board animation thread. */
     private Thread animateShowBoardThread;
 
-    private Int2 nextDieMouseRollPos = OFFSCREEN_POSITION;
+    /** The current position of the mouse. Used for drawing the die. */
+    private Int2 currentMousePosition = OFFSCREEN_POSITION;
+    /** The previous mouse position Used for the dice rolling functionality. */
     private Int2 previousMousePos = new Int2(0, 0);
 
+    /** @return The GUIManager instance. */
     public static GUIManager getInstance() {
         return instance;
     }
@@ -176,6 +196,7 @@ public class GUIManager extends JComponent {
         System.out.println("Display button selected. Number of players so far: " + game.getPlayers().length);
 
         Player newPlayer = new Player(jetonOption);
+        newPlayer.setCurrentPosition(OFFSCREEN_POSITION);
         game.addPlayer(newPlayer);
         setDisplayText(newPlayer.getIcon() + " wants to play!");
 
@@ -305,7 +326,7 @@ public class GUIManager extends JComponent {
             Int2 pos = new Int2(random.nextInt(0, WIDTH), random.nextInt(0, HEIGHT));
             GUIManager.getInstance().setDieRollPos(pos);
 
-            rollDie(DiceRollMode.WIN_STATE);
+            rollDie(DiceRollMode.FALLING_ANIMATION);
 
             ThreadManager.getInstance().threadSleep(5);
         }
@@ -433,7 +454,7 @@ public class GUIManager extends JComponent {
                 setDisplayText(text);
 
                 break;
-            case WIN_STATE:
+            case FALLING_ANIMATION:
 
                 break;
         }
@@ -512,12 +533,12 @@ public class GUIManager extends JComponent {
     /** Set the position of the dice.
      * @param pos The position of the dice. */
     public void setDieRollPos(Int2 pos) {
-        this.nextDieMouseRollPos = pos;
+        this.currentMousePosition = pos;
     }
 
-    /** The next dice position based on the mouse position. */
-    public Int2 getNextDieMouseRollPos() {
-        return nextDieMouseRollPos;
+    /** @return The next dice position based on the mouse position. */
+    public Int2 getCurrentMousePosition() {
+        return currentMousePosition;
     }
 
     /** @return The main JFrame. */
@@ -529,7 +550,7 @@ public class GUIManager extends JComponent {
      * @param mouseEvent The Mouse event. */
     public void onMouseReleased(MouseEvent mouseEvent) {
         if (!isInAnimation() && board != null) {
-            nextDieMouseRollPos = new Int2(mouseEvent.getX(), mouseEvent.getY());
+            currentMousePosition = new Int2(mouseEvent.getX(), mouseEvent.getY());
             GUIManager.getInstance().rollDie(game.getDiceRollMode());
         }
     }
@@ -538,12 +559,12 @@ public class GUIManager extends JComponent {
      * @param mouseEvent The Mouse event.*/
     public void onMouseDragged(MouseEvent mouseEvent) {
         if (!GUIManager.getInstance().isInAnimation()) {
-            nextDieMouseRollPos = new Int2(mouseEvent.getX(), mouseEvent.getY());
+            currentMousePosition = new Int2(mouseEvent.getX(), mouseEvent.getY());
 
-            double x = previousMousePos.x - nextDieMouseRollPos.x;
-            double y = previousMousePos.y - nextDieMouseRollPos.y;
+            double x = previousMousePos.x - currentMousePosition.x;
+            double y = previousMousePos.y - currentMousePosition.y;
 
-            previousMousePos = nextDieMouseRollPos;
+            previousMousePos = currentMousePosition;
         }
     }
 }

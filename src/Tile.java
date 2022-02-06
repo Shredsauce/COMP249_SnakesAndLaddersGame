@@ -4,9 +4,13 @@
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
 
+/** Represents a tile on the snakes and ladders board. */
 public class Tile {
+    /** The id of the tile. */
     private int tileId;
+    /** The board coordinates of this tile. */
     private Int2 coordinates;
+    /** The move-to (snakes and ladder) element of this tile (its own id if it does not have any) */
     private int moveToTileId;
 
     /** Constructor
@@ -29,22 +33,23 @@ public class Tile {
         return moveToTileId != tileId;
     }
 
-    /** Set the tile's move-to tile id. */
+    /** Set the tile's move-to tile id.
+     * @param moveToTileId The id of the tile to move to. */
     public void setMoveToTileId(int moveToTileId) {
         this.moveToTileId = moveToTileId;
     }
 
-    /** Get the tile's move-to tile id. */
+    /** @return The tile's move-to tile id. */
     public int getMoveToTileId() {
         return moveToTileId;
     }
 
-    /** Get the tile's coordinates. */
+    /** @return The tile's coordinates. */
     public Int2 getCoordinates() {
         return this.coordinates;
     }
 
-    /** Get the tile's board position. */
+    /** @return the tile's board position. */
     public Int2 getBoardPosition() {
         return new Int2(coordinates.x * DrawingManager.TILE_SIZE + DrawingManager.OFFSET.x, coordinates.y * DrawingManager.TILE_SIZE + DrawingManager.OFFSET.y);
     }
