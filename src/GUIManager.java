@@ -1,5 +1,5 @@
 // -----------------------------------------------------
-// Assignment 1
+// Assignment 1 due February 7
 //
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
@@ -96,7 +96,7 @@ public class GUIManager extends JComponent {
                 break;
             case PLAY:
                 board = new Board(game);
-                board.setPlayers(game.getPlayers());
+                board.initPlayers(game.getPlayers());
                 animateShowBoard();
                 mainContainer.add(DrawingManager.getInstance(), BorderLayout.CENTER);
                 displayCancelButton();
@@ -160,11 +160,9 @@ public class GUIManager extends JComponent {
      * @param jeton The icon option to check.
      * */
     private boolean isJetonChosenByPlayer(String jeton) {
-        for (String jetonOption : game.getJetonOptions()) {
-            for (Player player : game.getPlayers()) {
-                if (player.getIcon() == jeton) {
-                    return true;
-                }
+        for (Player player : game.getPlayers()) {
+            if (player.getIcon() == jeton) {
+                return true;
             }
         }
 
@@ -182,7 +180,7 @@ public class GUIManager extends JComponent {
         setDisplayText(newPlayer.getIcon() + " wants to play!");
 
         if (game.getPlayers().length == game.getJetonOptions().length) {
-            tryStartGame();
+            game.play();
         } else {
             updateDisplay();
         }
@@ -191,7 +189,7 @@ public class GUIManager extends JComponent {
     /** Displays the start button*/
     private void displayStartButton() {
         JButton startGameBtn = new JButton("Start game");
-        startGameBtn.addActionListener(event -> tryStartGame());
+        startGameBtn.addActionListener(event -> game.play());
         headerPanel.add(startGameBtn);
     }
 
@@ -245,21 +243,6 @@ public class GUIManager extends JComponent {
         frame.repaint();
     }
 
-    /** Start the game only if the player order has been determined. */
-    private void tryStartGame() {
-        if (game.hasDeterminedPlayerOrder()) {
-            game.setGameState(GameState.PLAY);
-        } else {
-            game.getCurrentPlayer();
-            String text = "Player order must be decided based on the highest roll. " + game.getCurrentPlayer().toString() + ", click anywhere to roll the die.";
-            GUIManager.getInstance().setDisplayText(text);
-
-            game.setGameState(GameState.CHOOSE_PLAYER_ORDER);
-        }
-
-        updateDisplay();
-    }
-
     /** Display the cancel button. */
     private void displayCancelButton() {
         JButton cancelGameBtn = new JButton("Cancel game");
@@ -306,24 +289,31 @@ public class GUIManager extends JComponent {
 
         int numWinningDice = 400;
 
-        Thread thread = new Thread(() -> {
-            DrawingManager.getInstance().setShouldRefreshBackground(false);
-            for (int i = 0; i < numWinningDice; i++) {
-                Random random = new Random();
-                Int2 pos = new Int2(random.nextInt(0, WIDTH), random.nextInt(0, HEIGHT));
-                GUIManager.getInstance().setDieRollPos(pos);
-
-                rollDie(DiceRollMode.WIN_STATE);
-
-                ThreadManager.getInstance().threadSleep(5);
-            }
-
-            GUIManager.getInstance().setDieRollPos(GUIManager.OFFSCREEN_POSITION);
-            DrawingManager.getInstance().setShouldRefreshBackground(true);
-            setIsAnimating(false, "Start win animation");
-            onQuitToMainMenu();
-        });
+        Thread thread = new Thread(() -> diceMania(numWinningDice));
         thread.start();
+
+    }
+
+    /**
+     * Stop refreshing the background and change the die's position so that it looks like it's multiplying. Similar to the mountains of cards that rain down in Solitaire.
+     * @param numFallingDice The number of dice that should appear. This is really the number of times the die changes position.
+     */
+    private void diceMania(int numFallingDice) {
+        DrawingManager.getInstance().setShouldRefreshBackground(false);
+        for (int i = 0; i < numFallingDice; i++) {
+            Random random = new Random();
+            Int2 pos = new Int2(random.nextInt(0, WIDTH), random.nextInt(0, HEIGHT));
+            GUIManager.getInstance().setDieRollPos(pos);
+
+            rollDie(DiceRollMode.WIN_STATE);
+
+            ThreadManager.getInstance().threadSleep(5);
+        }
+
+        GUIManager.getInstance().setDieRollPos(GUIManager.OFFSCREEN_POSITION);
+        DrawingManager.getInstance().setShouldRefreshBackground(true);
+        setIsAnimating(false, "Start win animation");
+        onQuitToMainMenu();
     }
 
     /** Move a player on the board.
@@ -383,7 +373,7 @@ public class GUIManager extends JComponent {
 
             currentTile = board.getTile(nextTileId);
             player.setCurrentTile(currentTile);
-            Int2 goalPos = currentTile.getPosition();
+            Int2 goalPos = currentTile.getBoardPosition();
             player.setCurrentPosition(goalPos);
 
             ThreadManager.getInstance().threadSleep(300);
@@ -398,7 +388,7 @@ public class GUIManager extends JComponent {
             Tile moveToTile = board.getTile(moveToTileId);
 
             player.setCurrentTile(moveToTile);
-            Int2 goalPos = moveToTile.getPosition();
+            Int2 goalPos = moveToTile.getBoardPosition();
             player.setCurrentPosition(goalPos);
         }
 

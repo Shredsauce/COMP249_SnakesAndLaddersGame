@@ -1,5 +1,5 @@
 // -----------------------------------------------------
-// Assignment 1
+// Assignment 1 due February 7
 //
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
@@ -34,6 +34,7 @@ public class DrawingManager extends JPanel {
         return instance;
     }
 
+    /** Constructor that takes a JFrame. */
     public DrawingManager (JFrame frame) {
         instance = this;
         frame.getContentPane().add(this, BorderLayout.CENTER);
@@ -48,6 +49,7 @@ public class DrawingManager extends JPanel {
         graphicsLoop(g);
     }
 
+    /** The graphics loop where all of the non-GUI game elements are updated. */
     private void graphicsLoop(Graphics g) {
         if (board == null) return;
 
@@ -69,6 +71,7 @@ public class DrawingManager extends JPanel {
         repaint();
     }
 
+    /** Draw the players on the board. */
     private void drawPlayers(Graphics2D g2d) {
         for (int i = 0; i < board.getPlayers().length; i++) {
             Player player = board.getPlayers()[i];
@@ -86,6 +89,7 @@ public class DrawingManager extends JPanel {
         }
     }
 
+    /** Draw the die. */
     private void drawDie(Graphics2D g2d) {
         int size = 50;
         int shadowOffset = 3;
@@ -139,25 +143,27 @@ public class DrawingManager extends JPanel {
         g2d.translate(-diePositionOffset.x, -diePositionOffset.y);
     }
 
+    /** Draw the tile's id. */
     private void drawTileNumber(Graphics2D g2d, int tileId, int xPos, int yPos) {
         int boardNumberYOffset = 20;
         g2d.setColor(Color.white);
         g2d.drawString(""+tileId, xPos, yPos + TILE_SIZE - boardNumberYOffset);
     }
 
+    /** Draw the tile. */
     private void drawTile(Graphics2D g2d, Tile tile) {
         int endTileAnimSwitch = board.getEndTileIdForAnim() % 1;
         Color tileColor = (tile.getTileId() % 2) + endTileAnimSwitch == 1 ? oddTileColor : evenTileColor;
         g2d.setColor(tileColor);
 
-        Int2 pos = tile.getPosition();
+        Int2 pos = tile.getBoardPosition();
         int tileId = tile.getTileId();
 
         Tile previousTile = board.getTile(tileId - 1);
         Tile nextTile = board.getTile(tileId + 1);
 
         if (shouldDrawSnakeHead(tileId, nextTile)) {
-            drawBoardHead(g2d, tile, previousTile);
+            drawBoardSnakeHead(g2d, tile, previousTile);
         } else if (shouldDrawSnakeTail(tileId)) {
             drawBoardTail(g2d, tile, nextTile);
         } else {
@@ -179,10 +185,13 @@ public class DrawingManager extends JPanel {
         }
     }
 
+    /** Draw a beautiful circle. */
     private void drawCircle (Graphics2D g2d, Int2 center, int radius) {
         g2d.fillOval(center.x-radius, center.y-radius, 2*radius, 2*radius);
     }
 
+    /** Draw the board with its tile.
+     * @param tileEndId The last tile to draw. This is for the snake head animation. */
     private void drawBoard(Graphics2D g2d, int tileEndId) {
         drawBoardBackground(g2d);
 
@@ -206,6 +215,7 @@ public class DrawingManager extends JPanel {
         }
     }
 
+    /** Draw snakes and ladders on the board. */
     private void drawMoveToElements(Graphics2D g2d) {
         for (int y = 0; y < board.getBoardSize().y; y++) {
             for (int x = 0; x < board.getBoardSize().x; x++) {
@@ -224,31 +234,38 @@ public class DrawingManager extends JPanel {
         }
     }
 
+    /** Draw the board's rustic brown background. */
     private void drawBoardBackground(Graphics2D g2d) {
         g2d.setColor(boardColor);
         g2d.fill3DRect(OFFSET.x, OFFSET.y, TILE_SIZE*board.getBoardSize().x, TILE_SIZE*board.getBoardSize().y, true);
     }
 
+    /** @return Whether the intro animation snake head should be drawn. */
     private boolean shouldDrawSnakeHead(int tileId, Tile nextTile) {
         return nextTile == null || tileId == board.getEndTileIdForAnim();
     }
 
+    /** Set whether or not the background should refresh. This is used for the falling dice animation when a player wins. */
     public void setShouldRefreshBackground(boolean shouldRefreshBackground) {
         this.shouldRefreshBackground = shouldRefreshBackground;
     }
 
+    /** @return Whether the snake tail should be drawn. */
     private boolean shouldDrawSnakeTail(int tileId) {
         return tileId <= NUM_TAIL_TILES;
     }
 
+    /** Draw a horizontal tile piece at position. */
     private void drawHorizontalTile(Graphics2D g2d, Int2 pos) {
         drawStraightTile(g2d, pos, false);
     }
 
+    /** Draw a vertical tile piece at position. */
     private void drawVerticalTile(Graphics2D g2d, Int2 pos) {
         drawStraightTile(g2d, pos, true);
     }
 
+    /** Draw a straight tile piece at position either vertical or horizontal specified by isVertical. */
     private void drawStraightTile(Graphics2D g2d, Int2 pos, boolean isVertical) {
         Int2 cellCenter = new Int2(pos.x + TILE_HALF_SIZE, pos.y + TILE_HALF_SIZE);
         double cellRotation = isVertical ? Math.PI/2 : 0;
@@ -259,9 +276,10 @@ public class DrawingManager extends JPanel {
         g2d.rotate(-cellRotation, cellCenter.x, cellCenter.y);
     }
 
-    private void drawBoardHead(Graphics2D g2d, Tile tile, Tile previousTile) {
-        Int2 pos = tile.getPosition();
-        Int2 previousPos = previousTile != null ? previousTile.getPosition() : pos;
+    /** Draw the fancy snake head on the board at tile. Use the previous tile to determine where the head should be looking. */
+    private void drawBoardSnakeHead(Graphics2D g2d, Tile tile, Tile previousTile) {
+        Int2 pos = tile.getBoardPosition();
+        Int2 previousPos = previousTile != null ? previousTile.getBoardPosition() : pos;
 
         double headAngle = getSnakeHeadAngle(pos, previousPos);
 
@@ -306,7 +324,18 @@ public class DrawingManager extends JPanel {
         g2d.rotate(-headAngle, cellCenter.x, cellCenter.y);
     }
 
+    /** Determine the angle that the giant board snake head should be pointing depending on the previous tile position. */
+    private double getSnakeHeadAngle(Int2 pos, Int2 previousPos) {
+        Int2 previousTileDir = new Int2(previousPos.x - pos.x, previousPos.y - pos.y);
+        if (previousTileDir.x > 0) return 0;
+        if (previousTileDir.x < 0) return Math.PI;
+        if (previousTileDir.y > 0) return Math.PI/2;
+        if (previousTileDir.y < 0) return (3*Math.PI)/2;
 
+        return 0;
+    }
+
+    /** Draw a turning tile at position. This is where the giant snake that makes up the board tiles bends at the turns. */
     private void drawTurningTile(Graphics2D g2d, Int2 pos, double angle) {
         Int2 cellCenter = new Int2(pos.x +  TILE_HALF_SIZE, pos.y + TILE_HALF_SIZE);
 
@@ -317,6 +346,17 @@ public class DrawingManager extends JPanel {
         g2d.rotate(-angle, cellCenter.x, cellCenter.y);
     }
 
+    /** Determine the angle that the turning tile should be using the previous and next tile directions as parameters. */
+    private double getTurningTileAngle(Int2 prevDir, Int2 nextDir) {
+        if ((prevDir.x < 0 && nextDir.y < 0) || (nextDir.x < 0 && prevDir.y < 0)) return 0;
+        if ((prevDir.x < 0 && nextDir.y > 0) || (nextDir.x < 0 && prevDir.y > 0)) return (3*Math.PI)/2;
+        if ((prevDir.x > 0 && nextDir.y < 0) || (nextDir.x > 0 && prevDir.y < 0)) return Math.PI/2;
+        if ((prevDir.x > 0 && nextDir.y > 0) || (nextDir.x > 0 && prevDir.y > 0)) return Math.PI;
+
+        return 0;
+    }
+
+    /** Draw a move-to ladder element from tile that starts at startTileId and ends at endTileId. */
     private void drawLadder(Graphics2D g2d, int startTileId, int endTileId) {
         float ladderThickness = board.getBoardSettings().ladderThickness;
         int ladderWidth = board.getBoardSettings().ladderWidth;
@@ -327,8 +367,8 @@ public class DrawingManager extends JPanel {
         Tile startTile = board.getTile(startTileId);
         Tile endTile = board.getTile(endTileId);
 
-        Int2 startPos = startTile.getPosition();
-        Int2 endPos = endTile.getPosition();
+        Int2 startPos = startTile.getBoardPosition();
+        Int2 endPos = endTile.getBoardPosition();
 
         int startPosX = startPos.x + TILE_HALF_SIZE;
         int startPosY = startPos.y + ladderPosYOffset;
@@ -362,14 +402,15 @@ public class DrawingManager extends JPanel {
         g2d.rotate(-angle, startPosX, startPosY);
     }
 
+    /** Draw a move-to snake element from tile that starts at startTileId and ends at endTileId. */
     private void drawSnake(Graphics2D g2d, int startTileId, int endTileId) {
         float snakeThickness = 5f;
 
         Tile startTile = board.getTile(startTileId);
         Tile endTile = board.getTile(endTileId);
 
-        Int2 tileStartPos = startTile.getPosition();
-        Int2 tileEndPos = endTile.getPosition();
+        Int2 tileStartPos = startTile.getBoardPosition();
+        Int2 tileEndPos = endTile.getBoardPosition();
 
         int startPosX = tileStartPos.x + TILE_HALF_SIZE;
         int startPosY = tileStartPos.y + TILE_HALF_SIZE;
@@ -410,8 +451,9 @@ public class DrawingManager extends JPanel {
         g2d.rotate(-angle, startPosX, startPosY);
     }
 
+    /** Draw the board's tail at tile. (this is just a triangle that takes the next tile as a parameter to determine where it should be pointing.) */
     private void drawBoardTail(Graphics2D g2d, Tile tile, Tile nextTile) {
-        Int2 pos = tile.getPosition();
+        Int2 pos = tile.getBoardPosition();
         Int2 cellCenter = new Int2(pos.x +  TILE_HALF_SIZE, pos.y + TILE_HALF_SIZE);
 
         double tailRotationAngle = getSnakeTailAngle(tile.getCoordinates(), nextTile.getCoordinates());
@@ -424,25 +466,7 @@ public class DrawingManager extends JPanel {
         g2d.rotate(-tailRotationAngle, cellCenter.x, cellCenter.y);
     }
 
-    private double getSnakeHeadAngle(Int2 pos, Int2 previousPos) {
-        Int2 previousTileDir = new Int2(previousPos.x - pos.x, previousPos.y - pos.y);
-        if (previousTileDir.x > 0) return 0;
-        if (previousTileDir.x < 0) return Math.PI;
-        if (previousTileDir.y > 0) return Math.PI/2;
-        if (previousTileDir.y < 0) return (3*Math.PI)/2;
-
-        return 0;
-    }
-
-    private double getTurningTileAngle(Int2 prevDir, Int2 nextDir) {
-        if ((prevDir.x < 0 && nextDir.y < 0) || (nextDir.x < 0 && prevDir.y < 0)) return 0;
-        if ((prevDir.x < 0 && nextDir.y > 0) || (nextDir.x < 0 && prevDir.y > 0)) return (3*Math.PI)/2;
-        if ((prevDir.x > 0 && nextDir.y < 0) || (nextDir.x > 0 && prevDir.y < 0)) return Math.PI/2;
-        if ((prevDir.x > 0 && nextDir.y > 0) || (nextDir.x > 0 && prevDir.y > 0)) return Math.PI;
-
-        return 0;
-    }
-
+    /** Determine the giant board snake's tail angle depending on the next tile's coordinates. */
     private double getSnakeTailAngle(Int2 tailTileCoord, Int2 nextTileCoord) {
         if (nextTileCoord.x > tailTileCoord.x) return 0;
         if (nextTileCoord.x < tailTileCoord.x) return Math.PI;
@@ -452,12 +476,14 @@ public class DrawingManager extends JPanel {
         return 0;
     }
 
+    /** Set the Graphics2D font size. */
     private void setFontSize(Graphics2D g2d, float fontSize) {
         Font currentFont = g2d.getFont();
         Font newFont = currentFont.deriveFont(currentFont.getStyle(), fontSize);
         g2d.setFont(newFont);
     }
 
+    /** Set the board that will be used for drawing. */
     public void setBoard(Board board) {
         this.board =  board;
         previousDieValue = board.getCurrentDieValue();

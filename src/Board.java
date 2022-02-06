@@ -1,5 +1,5 @@
 // -----------------------------------------------------
-// Assignment 1
+// Assignment 1 due February 7
 // Inspiration for using Graphics2D comes from https://zetcode.com/gfx/java2d/introduction/
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
@@ -21,13 +21,11 @@ public class Board {
 
     private boolean boardShowAnimComplete;
 
-    // Board
     private Int2 boardSize = new Int2(10, 10);
-
-
-    // Dice
     private int currentDieValue = 6;
 
+    /** @return The tile with tile id tileId.
+     * @param tileId The id related to the tile being searched for. */
     public Tile getTile(int tileId) {
         // The zeroth start tile is not part of the 2D array of tiles so it is handled this way
         if (tileId == 0) {
@@ -47,6 +45,7 @@ public class Board {
         return null;
     }
 
+    /** @return The tile at the specified coordinates. Returns null if the tile at the specified coordinates is non-existant. Clamps the coordinates to the board size.*/
     public Tile getTileAtCoordinates(Int2 coord) {
         int clampedX = coord.x;
         if (clampedX < 0) {
@@ -67,10 +66,7 @@ public class Board {
         return tile;
     }
 
-    public int getTotalTiles() {
-        return boardSize.x * boardSize.y;
-    }
-
+    /** Constructor that takes a LadderAndSnake game as a parameter. */
     public Board(LadderAndSnake game) {
         this.boardSettings = game.getBoardSettings();
         this.boardSize = boardSettings.boardSize;
@@ -99,7 +95,7 @@ public class Board {
             boolean preferHorizontal = horizontalChanceResult < boardSettings.horizontalChance;
             boolean preferForward = forwardChanceResult < boardSettings.forwardChance;
 
-            ArrayList<Int2> validNeighborCoords = getValidNeighborCoords(tile);
+            ArrayList<Int2> validNeighborCoords = getNeighboringTileCoords(tile);
             validNeighborCoords = sortValidCoordsByPreference(tile, validNeighborCoords, preferHorizontal, preferForward);
 
             if (validNeighborCoords.size() == 0) {
@@ -119,16 +115,22 @@ public class Board {
         applyMoveToConfig(moveToConfig);
     }
 
+    /** This creates the start tile at with id zero in the offscreen position.
+     * @return The start tile that was created. */
     private Tile createStartTile() {
         if (startTile != null) {
             System.out.println("Error: Start tile already exists");
             return startTile;
         }
-        Tile firstTile = getTile(1);
-        Int2 startTilePos = new Int2(firstTile.getPosition().x - DrawingManager.TILE_SIZE, firstTile.getPosition().y);
+
+        Int2 startTilePos = GUIManager.OFFSCREEN_POSITION;
         return new Tile(0, startTilePos);
     }
 
+    /** Generates the config needed for the 'move to' (snake and ladder) elements on the board. This is only needed for the random game mode. The default board uses a hardcoded config.
+     * @return The hashtable key is the id of the start tile. The value is the id of the end tile.
+     * @param boardSettings The  board settings for use with the randomization.
+     * @param lastTile The tile on the board. */
     private Hashtable<Integer, Integer> generateMoveToConfig(BoardSettings boardSettings, Tile lastTile) {
         if (boardSettings.useDefault) {
             return boardSettings.getDefaultMoveToConfig();
@@ -158,19 +160,23 @@ public class Board {
         return generatedMoveToConfig;
     }
 
+    /** Set the move-to (snake and ladder element functionality) to the board. */
     private void applyMoveToConfig(Hashtable<Integer, Integer> moveToConfig) {
         for (int y = 0; y < boardSize.y; y++) {
             for (int x = 0; x < boardSize.x; x++) {
                 Tile tile = tiles[x][y];
 
                 if (tile != null && moveToConfig.containsKey(tile.getTileId())) {
-                    tile.setMoveTo(moveToConfig.get(tile.getTileId()));
+                    tile.setMoveToTileId(moveToConfig.get(tile.getTileId()));
                 }
             }
         }
     }
 
-    private ArrayList<Int2> getValidNeighborCoords(Tile tile) {
+    /** Returns a list of neighboring tile coordinates.
+     * @param tile The tile's whose neighbors will be checked
+     * */
+    private ArrayList<Int2> getNeighboringTileCoords(Tile tile) {
         Int2 coord = tile.getCoordinates();
         Int2 rightNeighborCoord = new Int2(coord.x + 1, coord.y);
         Int2 leftNeighborCoord = new Int2(coord.x - 1, coord.y);
@@ -184,13 +190,8 @@ public class Board {
 
         ArrayList<Int2> validCoords = new ArrayList<Int2>();
 
-        if (rightNeighbor == null) {
-            validCoords.add(rightNeighborCoord);
-        }
-
-        if (leftNeighbor == null) {
-            validCoords.add(leftNeighborCoord);
-        }
+        if (rightNeighbor == null) { validCoords.add(rightNeighborCoord); }
+        if (leftNeighbor == null) { validCoords.add(leftNeighborCoord); }
 
         if (upNeighbor == null) {
             validCoords.add(upNeighborCoord);
@@ -203,8 +204,10 @@ public class Board {
         return validCoords;
     }
 
+    /**  */
     private ArrayList<Int2> sortValidCoordsByPreference(Tile tile, ArrayList<Int2> validCoords, boolean preferHorizontal, boolean preferForward) {
         ArrayList<Int2> sortedCoords = new ArrayList<Int2>();
+        ArrayList<Int2> rejectedCoords = new ArrayList<Int2>();
 
         for(Int2 validCoord : validCoords) {
             Int2 directionFromTile = new Int2(validCoord.x - tile.getCoordinates().x, validCoord.y - tile.getCoordinates().y);
@@ -223,13 +226,46 @@ public class Board {
                 sortedCoords.add(validCoord);
             } else if (!preferForward && directionFromTile.x < 0 || directionFromTile.y < 0) {
                 sortedCoords.add(validCoord);
+            } else {
+                rejectedCoords.add(validCoord);
             }
+        }
+
+        sortedCoords.addAll(rejectedCoords);
+
+        if (!boardSettings.useDefault) {
+            sortedCoords = sortCoordinatesWonkily(sortedCoords);
         }
 
         return sortedCoords;
     }
 
-    public void setPlayers(Player[] players) {
+    /** This is an attempt at randomizing the coordinates if the default board settings aren't used. */
+    private ArrayList<Int2> sortCoordinatesWonkily(ArrayList<Int2> sortedCoords) {
+        ArrayList<Int2> boundaryCoords = new ArrayList<>();
+        for(Int2 sortedCoord : sortedCoords) {
+            if (sortedCoord.x < 3 || sortedCoord.x >= boardSize.x - 3 ||
+                    sortedCoord.y < 3 || sortedCoord.y >= boardSize.y - 3) {
+
+                boundaryCoords.add(sortedCoord);
+            }
+        }
+
+        ArrayList<Int2> preferNoBoundaryCoords = new ArrayList<>();
+
+        for (Int2 sortedCoord : sortedCoords) {
+            if (boundaryCoords.contains(sortedCoord)) continue;
+
+            preferNoBoundaryCoords.add(sortedCoord);
+        }
+
+        preferNoBoundaryCoords.addAll(boundaryCoords);
+        sortedCoords = preferNoBoundaryCoords;
+        return sortedCoords;
+    }
+
+    /** Set the players to the board and place them on the starting tile. */
+    public void initPlayers(Player[] players) {
         this.players = players;
 
         for (int i = 0; i < players.length; i++) {
@@ -237,50 +273,57 @@ public class Board {
         }
     }
 
-
+    /** @return The last tile on the board. */
     public Tile getLastTile() {
         return lastTile;
     }
 
+    /** @return The players on the board. */
     public Player[] getPlayers() {
         return players;
     }
 
-
+    /** Set the board's die value. */
     public void setDieValue(int dieValue) {
         currentDieValue = dieValue;
     }
 
-
+    /** @return The board's current die value. */
     public int getCurrentDieValue() {
         return currentDieValue;
     }
 
+    /** @return the size of the board. */
     public Int2 getBoardSize() {
         return boardSize;
     }
 
+    /** @return The 2D array of tiles. */
     public Tile[][] getTiles() {
         return tiles;
     }
 
+    /** @return The settings for the board. */
     public BoardSettings getBoardSettings() {
         return boardSettings;
     }
 
+    /** Set the end tile's id that will be used for the board showing animation. */
     public void setEndTileIdForAnim(int endTileIdForAnim) {
         this.endTileIdForAnim = endTileIdForAnim;
     }
 
+    /** Get the id of the end tile that will be used for the board showing animation. */
     public int getEndTileIdForAnim() {
         return endTileIdForAnim;
     }
 
-
+    /** Notify that board animation has completed. */
     public void setBoardAnimComplete() {
         boardShowAnimComplete = true;
     }
 
+    /** @return Whether the board intro animation is showing. */
     public boolean isBoardShowAnimComplete() {
         return boardShowAnimComplete;
     }

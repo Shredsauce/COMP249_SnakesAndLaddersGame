@@ -1,5 +1,5 @@
 // -----------------------------------------------------
-// Assignment 1
+// Assignment 1 due February 7
 //
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
@@ -21,13 +21,6 @@ public class LadderAndSnake {
     private boolean hasDeterminedPlayerOrder;
 
     private BoardSettings boardSettings = new BoardSettings();
-
-    /** The game's entry point. */
-    public static void main(String[] args) {
-        LadderAndSnake game = new LadderAndSnake();
-        GUIManager guiManager = new GUIManager(game);
-        DrawingManager drawingManager = new DrawingManager(guiManager.getFrame());
-    }
 
     /** Constructor that sets the initial game state to CHOOSE_PLAYERS. */
     public LadderAndSnake() {
@@ -191,6 +184,21 @@ public class LadderAndSnake {
     public int flipDice() {
         int dieSides = 6;
         return random.nextInt(1, dieSides + 1);
+    }
+
+    /** Start the game only if the player order has been determined. */
+    public void play() {
+        if (hasDeterminedPlayerOrder()) {
+            setGameState(GameState.PLAY);
+        } else {
+            getCurrentPlayer();
+            String text = "Player order must be decided based on the highest roll. " + getCurrentPlayer().toString() + ", click anywhere to roll the die.";
+            GUIManager.getInstance().setDisplayText(text);
+
+            setGameState(GameState.CHOOSE_PLAYER_ORDER);
+        }
+
+        GUIManager.getInstance().updateDisplay();
     }
 
     /** This should only be used for the dice roll animation.

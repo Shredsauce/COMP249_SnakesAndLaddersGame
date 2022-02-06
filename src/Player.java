@@ -1,5 +1,5 @@
 // -----------------------------------------------------
-// Assignment 1
+// Assignment 1 due February 7
 //
 // Written by: Malcolm Arcand Laliberé - 26334792
 // -----------------------------------------------------
@@ -72,10 +72,12 @@ public class Player {
         return text;
     }
 
+    /** Get this player's current position. */
     public Int2 getCurrentPosition() {
         return position;
     }
 
+    /** Set this player's position. */
     public void setCurrentPosition(Int2 position) {
         this.position = position;
     }
